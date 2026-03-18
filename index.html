@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Garisrey — From East to Peace</title>
+  <meta name="description" content="Garisrey — Brand Fashion Lokal Indonesia. From East to Peace. Denim Culture, Local Pride."/>
+  <link rel="stylesheet" href="assets/css/global.css"/>
+  <link rel="stylesheet" href="assets/css/index.css"/>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="pageLoader" aria-hidden="true">
+  <div class="pl-corner tl"></div>
+  <div class="pl-corner tr"></div>
+  <div class="pl-corner bl"></div>
+  <div class="pl-corner br"></div>
+  <div class="pl-logo-wrap">
+    <div class="pl-ring"></div>
+    <img class="pl-logo" src="assets/logo/logo.png" alt="Garisrey"
+      onerror="this.style.display='none';document.querySelector('.pl-wordmark').style.display='block'"/>
+    <span class="pl-wordmark" style="display:none">Garis<span>rey.</span></span>
+  </div>
+  <div class="pl-tagline">From East to Peace</div>
+  <div class="pl-bar-wrap"><div class="pl-bar"></div></div>
+  <div class="pl-pct" id="plPct">0%</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- NAV — tanpa link About -->
+<nav id="navbar">
+  <div style="display:flex;align-items:center;gap:14px">
+    <img class="nav-logo" id="navLogo" src="assets/logo/logo.png" alt="Garisrey"
+      onerror="this.style.display='none';document.getElementById('navWordmark').style.display='block'"/>
+    <span class="nav-wordmark" id="navWordmark" style="display:none">Garis<span>rey.</span></span>
+  </div>
+  <div class="nav-links">
+    <span class="nav-lnk on">Beranda</span>
+    <a class="nav-lnk" href="pages/shop.html">Shop</a>
+  </div>
+  <div class="nav-right">
+    <div class="acc-wrap" id="accWrap" style="display:none">
+      <button class="acc-btn" onclick="toggleAccMenu()" aria-label="Akun">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg>
+      </button>
+      <div class="acc-menu" id="accMenu">
+        <div class="acc-menu-head">
+          <div class="acc-menu-name" id="accMenuName">Pengguna</div>
+          <div class="acc-menu-email" id="accMenuEmail"></div>
+        </div>
+        <a class="acc-menu-item" href="pages/shop.html">
+          <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          Lihat Toko
+        </a>
+        <div class="acc-menu-div"></div>
+        <button class="acc-menu-item danger" onclick="doLogout()">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Keluar
+        </button>
+      </div>
+    </div>
+    <a class="nav-cta" href="pages/login.html" id="navAuthBtn">Masuk / Daftar</a>
+    <div class="ham" id="hamBtn" onclick="toggleDrawer()">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- DRAWER — tanpa link About -->
+<div id="drawer">
+  <span class="dr-lnk on">Beranda</span>
+  <a class="dr-lnk" href="pages/shop.html">Shop</a>
+  <a class="dr-lnk" id="drLogin" href="pages/login.html">Masuk / Daftar</a>
+  <span class="dr-lnk" id="drLogout" style="display:none" onclick="doLogout()">Keluar</span>
+  <a class="dr-lnk dr-cta" href="https://wa.me/628131003247" target="_blank">Order via WA</a>
+</div>
+
+<!-- MARQUEE -->
+<div class="marquee marquee-top">
+  <div class="mq-track" id="mqTrack"></div>
+</div>
+
+<!-- SECTION 1: KOLEKSI TERKINI sebagai hero section penuh -->
+<section class="latest-hero" id="latest">
+  <div class="latest-hero-inner">
+    <div class="latest-hero-head">
+      <div class="section-tag">Produk Terbaru</div>
+      <div class="latest-hero-title-row">
+        <h2 class="section-title">Koleksi <em>Terkini.</em></h2>
+        <a class="view-all" href="pages/shop.html">Lihat Semua →</a>
+      </div>
+    </div>
+    <div id="loadingState" style="text-align:center;padding:80px 0">
+      <div class="dots-loader"><span></span><span></span><span></span></div>
+      <p style="font-size:10px;color:var(--gray);letter-spacing:.2em;text-transform:uppercase;margin-top:12px">Memuat produk...</p>
+    </div>
+    <div class="prods-grid" id="prodsGrid" style="display:none"></div>
+  </div>
+</section>
+
+<!-- SECTION 2: HERO (dipindah dari atas) -->
+<section class="hero" id="heroSection">
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-side-text">SS 2025 — DENIM CULTURE — LOCAL PRIDE</div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">New Collection 2025</div>
+    <!-- Logo asli gantikan tulisan "Garisrey." -->
+    <div class="hero-logo-wrap">
+      <img src="assets/logo/logo.png" alt="Garisrey" class="hero-logo-img"
+        onerror="this.style.display='none';document.getElementById('heroWordmark').style.display='block'"/>
+      <h1 class="hero-title" id="heroWordmark" style="display:none">Garis<em>rey.</em></h1>
+    </div>
+    <p class="hero-sub">Brand fashion lokal Indonesia.<br>Dibangun dari identitas, semangat, dan keberanian.</p>
+    <div class="hero-btns">
+      <a class="btn btn-red" href="pages/shop.html">Lihat Koleksi</a>
+      <button class="btn btn-outline" onclick="openOrderPopup()">ORDER NOW</button>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="hero-scroll-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- SECTION 3: ABOUT / BRAND STORY -->
+<section class="about-sec" id="about">
+  <div class="about-inner">
+    <div class="about-img-wrap">
+      <img class="about-img-main" id="aboutImg1" src="assets/img/2.jpeg" alt="Garisrey Brand" style="background:var(--black3);min-height:400px"/>
+      <img class="about-img-accent" id="aboutImg2" src="assets/img/3.jpeg" alt="Garisrey Detail" style="background:var(--black3)"/>
+      <div class="about-tag-wrap"><div class="about-tag-txt">Est. 2025</div></div>
+    </div>
+    <div class="about-text">
+      <div class="section-tag">From East to Peace</div>
+      <h2 class="section-title">Brand Lokal<br><em>Penuh Jiwa.</em></h2>
+      <p class="about-desc">Garisrey lahir dari semangat anak muda Indonesia Timur yang ingin berbicara lewat fashion. Setiap jahitan adalah ekspresi, setiap detail adalah cerita. Kami percaya pakaian bukan sekadar kain — ia adalah identitas.</p>
+      <div class="about-stats">
+        <div><div class="stat-num" id="statProds">0</div><div class="stat-lbl">Produk Aktif</div></div>
+        <div><div class="stat-num">100%</div><div class="stat-lbl">Made in ID</div></div>
+        <div><div class="stat-num">SS25</div><div class="stat-lbl">Koleksi Kini</div></div>
+      </div>
+      <!-- CTA: satu tombol saja -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <a href="pages/shop.html" style="display:inline-flex;align-items:center;gap:14px;padding:13px 24px;background:var(--red);color:#fff;border:1px solid var(--red);border-radius:2px;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;text-decoration:none;transition:all .3s;width:fit-content;line-height:1"
+          onmouseover="this.style.background='transparent';this.style.color='var(--red)'"
+          onmouseout="this.style.background='var(--red)';this.style.color='#fff'">
+          <span style="line-height:1">Jelajahi</span>
+          <span style="font-size:18px;line-height:1;position:relative;top:-2px">→</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BAND -->
+<section class="cta-band">
+  <div class="cta-band-inner">
+    <div>
+      <h2 class="cta-band-title">Siap pakai <em>Garisrey?</em><br>Order sekarang.</h2>
+    </div>
+    <button class="btn btn-white" onclick="openOrderPopup()">ORDER NOW</button>
+  </div>
+</section>
+
+<!-- STICKER SHOWCASE — hanya 1 gambar stiker, ukuran besar -->
+<section class="sticker-sec">
+  <div class="sticker-inner">
+    <div class="sticker-label">Official Sticker</div>
+    <div class="sticker-img-wrap" id="stickerWrap" onclick="triggerEasterEgg()" style="cursor:pointer" title="Klik!">
+      <img id="lgStiker" src="assets/logo/stiker.png" alt="Garisrey Stiker"
+        onerror="this.src='assets/logo/logo.png';this.onerror=null"/>
+    </div>
+    <div class="sticker-sub">Garisrey — From East to Peace</div>
+  </div>
+</section>
+
+<!-- EASTER EGG OVERLAY — HEBOH VERSION -->
+<div id="easterEgg" style="display:none;position:fixed;inset:0;z-index:9999;background:#000;align-items:center;justify-content:center;flex-direction:column;overflow:hidden">
+
+  <!-- Partikel/confetti container -->
+  <div id="eggParticles" style="position:absolute;inset:0;pointer-events:none;overflow:hidden"></div>
+
+  <!-- Red scanline effect -->
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(204,0,0,.03) 2px,rgba(204,0,0,.03) 4px);pointer-events:none;z-index:1"></div>
+
+  <!-- Konten utama -->
+  <div id="eggContent" style="position:relative;z-index:2;text-align:center;padding:20px;max-width:600px;width:100%">
+
+    <!-- Badge "Easter Egg Found!" -->
+    <div id="eggBadge" style="display:inline-flex;align-items:center;gap:8px;background:var(--red);color:#fff;font-size:7px;font-weight:700;letter-spacing:.4em;text-transform:uppercase;padding:6px 18px;border-radius:100px;margin-bottom:24px;opacity:0;transform:translateY(-20px);transition:all .5s .1s">
+      🎯 Easter Egg Ditemukan!
+    </div>
+
+    <!-- Emoji burst -->
+    <div id="eggEmoji" style="font-size:80px;line-height:1;margin-bottom:20px;opacity:0;transform:scale(.3);transition:all .5s cubic-bezier(.34,1.56,.64,1) .2s">
+      🫡
+    </div>
+
+    <!-- Teks utama -->
+    <div id="eggHeadline" style="opacity:0;transform:translateY(30px);transition:all .6s cubic-bezier(.4,0,.2,1) .35s">
+      <div style="font-size:8px;font-weight:700;letter-spacing:.5em;text-transform:uppercase;color:var(--red);margin-bottom:12px">Selamat! Anda telah menemukan</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:clamp(36px,8vw,80px);line-height:.9;color:#f0ebe3;letter-spacing:-.01em;margin-bottom:4px">
+        Easter<br><em style="color:var(--red)">Egg.</em>
+      </div>
+    </div>
+
+    <!-- Logo / Wordmark -->
+    <div id="eggLogo" style="margin-top:28px;opacity:0;transform:translateY(20px);transition:all .5s .6s">
+      <img src="assets/logo/logotransparan.png" alt="Garisrey"
+        style="height:52px;width:auto;object-fit:contain;margin:0 auto;display:block;filter:drop-shadow(0 0 24px rgba(204,0,0,.7))"
+        onerror="this.style.display='none';document.getElementById('eggWordmark').style.display='block'"/>
+      <div id="eggWordmark" style="display:none;font-family:'DM Serif Display',serif;font-style:italic;font-size:42px;color:#f0ebe3;letter-spacing:-.01em">Garis<em style="color:var(--red)">rey.</em></div>
+    </div>
+
+    <!-- Tagline -->
+    <div id="eggTagline" style="margin-top:16px;opacity:0;transition:opacity .5s .8s">
+      <div style="font-size:8px;font-weight:700;letter-spacing:.45em;text-transform:uppercase;color:rgba(255,255,255,.28)">From East to Peace · SS 2025 · Made in Indonesia</div>
+    </div>
+
+    <!-- Progress bar countdown -->
+    <div id="eggProgress" style="margin-top:32px;opacity:0;transition:opacity .4s 1s">
+      <div style="height:2px;background:rgba(255,255,255,.08);border-radius:1px;overflow:hidden;width:200px;margin:0 auto">
+        <div id="eggBar" style="height:100%;background:var(--red);width:100%;transform-origin:left;border-radius:1px;transition:transform 3s linear"></div>
+      </div>
+      <div style="font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.2);margin-top:8px">Menutup otomatis...</div>
+    </div>
+
+  </div>
+
+  <style>
+    @keyframes confettiFall {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity:1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity:0; }
+    }
+    @keyframes eggOut {
+      to { opacity:0; transform:scale(.95); }
+    }
+    @keyframes redFlash {
+      0%,100% { background:#000; }
+      10%,30% { background:rgba(204,0,0,.15); }
+      20%     { background:rgba(204,0,0,.08); }
+    }
+    #easterEgg.flash { animation: redFlash .6s ease; }
+  </style>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-inner">
+    <div class="foot-grid">
+      <div>
+        <img class="foot-brand-logo" id="footLogo" src="assets/logo/logotransparan.png" alt="Garisrey" onerror="this.style.display='none'"/>
+        <div class="foot-brand-tagline">From East to Peace</div>
+        <p class="foot-brand-desc">Brand fashion lokal Indonesia. Dibangun dari identitas, semangat, dan keberanian.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Halaman</h4>
+        <span onclick="window.scrollTo({top:0,behavior:'smooth'})">Beranda</span>
+        <a href="pages/shop.html">Shop</a>
+      </div>
+      <div class="foot-col">
+        <h4>Produk</h4>
+        <div id="footProds"></div>
+      </div>
+      <div class="foot-col">
+        <h4>Kontak</h4>
+        <a href="https://wa.me/628131003247" target="_blank" style="display:flex;align-items:center;gap:8px">
+          <img src="assets/logo/wa.png" width="14" height="14" style="object-fit:contain;flex-shrink:0" onerror="this.style.display='none'"/>
+          WhatsApp
+        </a>
+        <a href="https://instagram.com/garisrey.studio" target="_blank" style="display:flex;align-items:center;gap:8px">
+          <img src="assets/logo/ig.png" width="14" height="14" style="object-fit:contain;flex-shrink:0" onerror="this.style.display='none'"/>
+          Instagram
+        </a>
+        <a href="https://tiktok.com/@garisrey" target="_blank" style="display:flex;align-items:center;gap:8px">
+          <img src="assets/logo/tiktok.png" width="14" height="14" style="object-fit:contain;flex-shrink:0" onerror="this.style.display='none'"/>
+          TikTok
+        </a>
+        <a href="https://shopee.co.id/garisrey" target="_blank" style="display:flex;align-items:center;gap:8px">
+          <img src="assets/logo/shopee.png" width="14" height="14" style="object-fit:contain;flex-shrink:0" onerror="this.style.display='none'"/>
+          Shopee
+        </a>
+      </div>
+    </div>
+    <div class="foot-bot">
+      <span class="foot-copy">© 2025 Garisrey. Made with ❤️ in Indonesia.</span>
+      <div class="foot-soc">
+        <a class="soc-btn" href="https://wa.me/628131003247" target="_blank" title="WhatsApp">
+          <img src="assets/logo/wa.png" alt="WhatsApp" width="18" height="18" style="object-fit:contain"
+            onerror="this.style.display='none';this.parentElement.textContent='WA'"/>
+        </a>
+        <a class="soc-btn" href="https://instagram.com/garisrey.studio" target="_blank" title="Instagram">
+          <img src="assets/logo/ig.png" alt="Instagram" width="18" height="18" style="object-fit:contain"
+            onerror="this.style.display='none';this.parentElement.textContent='IG'"/>
+        </a>
+        <a class="soc-btn" href="https://tiktok.com/@garisrey" target="_blank" title="TikTok">
+          <img src="assets/logo/tiktok.png" alt="TikTok" width="18" height="18" style="object-fit:contain"
+            onerror="this.style.display='none';this.parentElement.textContent='TT'"/>
+        </a>
+        <a class="soc-btn" href="https://shopee.co.id/garisrey" target="_blank" title="Shopee">
+          <img src="assets/logo/shopee.png" alt="Shopee" width="18" height="18" style="object-fit:contain"
+            onerror="this.style.display='none';this.parentElement.textContent='SP'"/>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ORDER NOW POPUP (Linktree) -->
+<div id="orderPopup" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.88);align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)" onclick="if(event.target===this)closeOrderPopup()">
+  <div style="background:#0f0f0f;border:1px solid rgba(255,255,255,.08);border-radius:12px;width:100%;max-width:340px;padding:32px 24px;text-align:center;position:relative">
+    <button onclick="closeOrderPopup()" style="position:absolute;top:14px;right:14px;width:28px;height:28px;background:rgba(255,255,255,.06);border:none;border-radius:50%;cursor:pointer;color:rgba(255,255,255,.4);font-size:16px;display:flex;align-items:center;justify-content:center">×</button>
+    <img src="assets/logo/logotransparan.png" alt="Garisrey" style="height:48px;width:auto;object-fit:contain;margin:0 auto 12px;display:block;opacity:.9" onerror="this.style.display='none'"/>
+    <p style="font-size:7px;font-weight:700;letter-spacing:.4em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:24px">Pilih platform order</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <!-- Shopee -->
+      <a href="https://shopee.co.id/garisrey" target="_blank"
+         style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(255,95,0,.1);border:1px solid rgba(255,95,0,.25);border-radius:8px;text-decoration:none;transition:all .18s"
+         onmouseover="this.style.background='rgba(255,95,0,.18)'" onmouseout="this.style.background='rgba(255,95,0,.1)'">
+        <img src="assets/logo/shopee.png" alt="Shopee" style="width:32px;height:32px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'"/>
+        <div style="text-align:left">
+          <div style="font-size:11px;font-weight:700;color:#ff5f00;letter-spacing:.04em">Shopee</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:2px">Order via Shopee</div>
+        </div>
+        <span style="margin-left:auto;color:rgba(255,255,255,.25);font-size:14px">→</span>
+      </a>
+      <!-- WhatsApp -->
+      <a href="https://wa.me/628131003247" target="_blank"
+         style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.2);border-radius:8px;text-decoration:none;transition:all .18s"
+         onmouseover="this.style.background='rgba(37,211,102,.16)'" onmouseout="this.style.background='rgba(37,211,102,.08)'">
+        <img src="assets/logo/wa.png" alt="WhatsApp" style="width:32px;height:32px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'"/>
+        <div style="text-align:left">
+          <div style="font-size:11px;font-weight:700;color:#25d366;letter-spacing:.04em">WhatsApp</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:2px">Chat langsung dengan kami</div>
+        </div>
+        <span style="margin-left:auto;color:rgba(255,255,255,.25);font-size:14px">→</span>
+      </a>
+      <!-- Instagram -->
+      <a href="https://instagram.com/garisrey.studio" target="_blank"
+         style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(225,48,108,.08);border:1px solid rgba(225,48,108,.2);border-radius:8px;text-decoration:none;transition:all .18s"
+         onmouseover="this.style.background='rgba(225,48,108,.16)'" onmouseout="this.style.background='rgba(225,48,108,.08)'">
+        <img src="assets/logo/ig.png" alt="Instagram" style="width:32px;height:32px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'"/>
+        <div style="text-align:left">
+          <div style="font-size:11px;font-weight:700;color:#e1306c;letter-spacing:.04em">Instagram</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:2px">DM di Instagram</div>
+        </div>
+        <span style="margin-left:auto;color:rgba(255,255,255,.25);font-size:14px">→</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div class="modal-bg" id="modalBg" style="display:none" onclick="if(event.target===this)closeProductModal()">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/js/global.js"></script>
+<script src="assets/js/index.js"></script>
+<script>
+function openOrderPopup() {
+  var p = document.getElementById('orderPopup');
+  if (p) { p.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function closeOrderPopup() {
+  var p = document.getElementById('orderPopup');
+  if (p) { p.style.display = 'none'; document.body.style.overflow = ''; }
+}
+window.openOrderPopup  = openOrderPopup;
+window.closeOrderPopup = closeOrderPopup;
+
+/* ── EASTER EGG SUPER HEBOH ── */
+var _eggActive = false;
+
+function _spawnConfetti() {
+  var container = document.getElementById('eggParticles');
+  if (!container) return;
+  var colors = ['#CC0000','#ff4444','#ffffff','#ff8800','#ffcc00','#ff6699'];
+  var shapes = ['■','●','▲','◆','★'];
+  for (var i = 0; i < 60; i++) {
+    (function(i) {
+      setTimeout(function() {
+        var el = document.createElement('div');
+        var color  = colors[Math.floor(Math.random()*colors.length)];
+        var shape  = shapes[Math.floor(Math.random()*shapes.length)];
+        var size   = Math.random()*16 + 8;
+        var left   = Math.random()*100;
+        var delay  = Math.random()*0.5;
+        var dur    = Math.random()*2 + 2;
+        el.textContent = shape;
+        el.style.cssText = 'position:absolute;left:'+left+'%;top:-30px;font-size:'+size+'px;color:'+color+';animation:confettiFall '+dur+'s '+delay+'s ease forwards;opacity:1;pointer-events:none;';
+        container.appendChild(el);
+        setTimeout(function(){ el.remove(); }, (dur+delay)*1000+100);
+      }, i*40);
+    })(i);
+  }
+}
+
+function triggerEasterEgg() {
+  if (_eggActive) return;
+  _eggActive = true;
+
+  var egg     = document.getElementById('easterEgg');
+  var sticker = document.getElementById('stickerWrap');
+  var content = document.getElementById('eggContent');
+
+  /* Sticker: spin + scale burst */
+  if (sticker) {
+    sticker.style.transition = 'transform .3s cubic-bezier(.34,1.8,.64,1)';
+    sticker.style.transform  = 'scale(1.3) rotate(15deg)';
+    setTimeout(function() {
+      sticker.style.transform = 'rotate(-5deg)';
+      setTimeout(function() { sticker.style.transform = ''; }, 200);
+    }, 300);
+  }
+
+  if (!egg) { _eggActive = false; return; }
+
+  /* Tampilkan overlay */
+  egg.style.display = 'flex';
+  egg.style.opacity = '0';
+  egg.style.transition = 'opacity .3s';
+  document.body.style.overflow = 'hidden';
+  setTimeout(function() { egg.style.opacity = '1'; }, 10);
+
+  /* Flash merah */
+  egg.classList.add('flash');
+  setTimeout(function() { egg.classList.remove('flash'); }, 600);
+
+  /* Spawn confetti */
+  _spawnConfetti();
+  setTimeout(_spawnConfetti, 800);
+
+  /* Stagger elemen masuk */
+  setTimeout(function() {
+    var badge    = document.getElementById('eggBadge');
+    var emoji    = document.getElementById('eggEmoji');
+    var headline = document.getElementById('eggHeadline');
+    var logo     = document.getElementById('eggLogo');
+    var tagline  = document.getElementById('eggTagline');
+    var progress = document.getElementById('eggProgress');
+    var bar      = document.getElementById('eggBar');
+
+    if (badge)    { badge.style.opacity    = '1'; badge.style.transform    = 'translateY(0)'; }
+    if (emoji)    { emoji.style.opacity    = '1'; emoji.style.transform    = 'scale(1)'; }
+    if (headline) { headline.style.opacity = '1'; headline.style.transform = 'translateY(0)'; }
+    if (logo)     { logo.style.opacity     = '1'; logo.style.transform     = 'translateY(0)'; }
+    if (tagline)  { tagline.style.opacity  = '1'; }
+    if (progress) {
+      progress.style.opacity = '1';
+      /* Progress bar mengecil dari 100% ke 0% dalam 3 detik */
+      setTimeout(function() {
+        if (bar) bar.style.transform = 'scaleX(0)';
+      }, 50);
+    }
+  }, 100);
+
+  /* Tutup setelah 4 detik (1s delay show + 3s progress) */
+  setTimeout(function() {
+    egg.style.transition = 'opacity .5s';
+    egg.style.opacity = '0';
+    setTimeout(function() {
+      egg.style.display = 'none';
+      egg.style.opacity = '1';
+      document.body.style.overflow = '';
+
+      /* Reset semua elemen */
+      ['eggBadge','eggEmoji','eggHeadline','eggLogo','eggTagline','eggProgress'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (id === 'eggBadge')    { el.style.opacity='0'; el.style.transform='translateY(-20px)'; }
+        if (id === 'eggEmoji')    { el.style.opacity='0'; el.style.transform='scale(.3)'; }
+        if (id === 'eggHeadline') { el.style.opacity='0'; el.style.transform='translateY(30px)'; }
+        if (id === 'eggLogo')     { el.style.opacity='0'; el.style.transform='translateY(20px)'; }
+        if (id === 'eggTagline')  { el.style.opacity='0'; }
+        if (id === 'eggProgress') { el.style.opacity='0'; }
+      });
+      var bar = document.getElementById('eggBar');
+      if (bar) { bar.style.transition='none'; bar.style.transform='scaleX(1)'; setTimeout(function(){bar.style.transition='transform 3s linear';},50); }
+
+      _eggActive = false;
+    }, 500);
+  }, 4100);
+}
+window.triggerEasterEgg = triggerEasterEgg;
+</script>
+</body>
+</html>
