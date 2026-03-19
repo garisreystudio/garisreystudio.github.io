@@ -63,9 +63,14 @@ function showToast(msg, type = 'info') {
 }
 
 /* ── MARQUEE ── */
-function buildMarquee(containerId) {
+/* Global WA message overrides — diisi oleh loadKontenBeranda / loadKontenShop */
+let WA_PESAN_UMUM  = 'Halo Garisrey! 👋 Saya ingin bertanya tentang produk kalian.';
+let WA_PESAN_ORDER = 'Halo Garisrey! 👋 Saya ingin order. Boleh info produk yang tersedia?';
+
+function buildMarquee(containerId, customItems) {
   containerId = containerId || 'mqTrack';
-  var items = ['Garisrey', 'From East to Peace', 'Made in Indonesia', 'Baggy Build', 'Local Pride', 'Denim Culture', 'SS 2025', '#GarisreyID'];
+  var defaultItems = ['Garisrey', 'From East to Peace', 'Made in Indonesia', 'Baggy Build', 'Local Pride', 'Denim Culture', 'SS 2025', '#GarisreyID'];
+  var items = customItems && customItems.length ? customItems : defaultItems;
   var track = document.getElementById(containerId);
   if (!track) return;
   track.innerHTML = '';
@@ -193,6 +198,7 @@ function loadAssetWithFallback(el, localPath, storagePath) {
 let _slideIdx  = 0;
 let _slideTimer = null;
 let _slideImgs  = [];
+let modalState  = { product: null, imgIdx: 0, selSize: '', qty: 1 };
 
 function _startSlide() {
   _clearSlide();
@@ -359,10 +365,7 @@ function renderProductModal(wishlistArr) {
 function openOrderPopupProduct() {
   var popup = document.getElementById('orderPopup');
   if (!popup) {
-    var p = modalState.product;
-    if (!p) return;
-    var txt = 'Halo Garisrey! 👋\nSaya tertarik dengan *' + p.name + '*.\nBoleh info ketersediaan dan cara order?';
-    window.open('https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(txt), '_blank');
+    window.open('https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(WA_PESAN_ORDER), '_blank');
     return;
   }
   popup.style.display = 'flex';
@@ -400,8 +403,8 @@ function buyViaWA() {
 }
 
 function quickWA(productName) {
-  const txt = `Halo Garisrey! 👋\nSaya tertarik dengan *${productName}*.\nBoleh info ketersediaan dan cara order?`;
-  window.open(`https://wa.me/${WA_NUMBER}?text=` + encodeURIComponent(txt), '_blank');
+  const base = `Halo Garisrey! 👋\nSaya tertarik dengan *${productName}*.\nBoleh info ketersediaan dan cara order?`;
+  window.open(`https://wa.me/${WA_NUMBER}?text=` + encodeURIComponent(base), '_blank');
 }
 
 /* ── DETAIL PAGE (fullscreen) — tampilkan SEMUA foto dalam grid ── */

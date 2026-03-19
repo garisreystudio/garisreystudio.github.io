@@ -3,6 +3,41 @@
    Dark luxury editorial · Red × Black × Bone
    ============================================= */
 
+/* ── CSS VARIABLES (admin-only) ── */
+:root {
+  --red: #CC0000;
+  --red-dk: #990000;
+  --black: #080808;
+  --black2: #0d0d0d;
+  --black3: #141414;
+  --black4: #1a1a1a;
+  --white: #f0ebe3;
+  --gray: rgba(255,255,255,.28);
+  --gray2: rgba(255,255,255,.14);
+  --green: #22c55e;
+  --yellow: #eab308;
+  --sidebar: 248px;
+}
+
+/* ── BASE RESET ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 16px; }
+body {
+  font-family: 'Space Mono', monospace;
+  background: var(--black);
+  color: var(--white);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+img, video { display: block; max-width: 100%; }
+a { text-decoration: none; color: inherit; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, select, textarea { font-family: inherit; }
+
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: #0d0d0d; }
+::-webkit-scrollbar-thumb { background: rgba(204,0,0,.45); border-radius: 2px; }
+
 /* ── AUTH GATE ── */
 #authGate {
   position: fixed;

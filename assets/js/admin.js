@@ -18,6 +18,9 @@
 /* ══════════════════════════════════════
    CONSTANTS & STATE
 ══════════════════════════════════════ */
+/* SUPABASE_URL, SUPABASE_ANON, ADMIN_EMAIL — declared as var in admin.html inline script,
+   accessible here as globals. WA_NUMBER also from inline script. */
+
 const ALL_SIZES  = ['XS','S','M','L','XL','XXL','28','29','30','31','32','33','34','36'];
 const CATEGORIES = ['denim','casual','limited','aksesoris','outerwear'];
 const BADGES     = ['','new','sale','limited','bestseller'];
@@ -819,9 +822,108 @@ async function loadBeranda() {
   if (data?.value) beranda = { heroImages: [], heroVideo: null, ...data.value };
 }
 
+/* ── HELPER: simpan ke tabel settings ──
+   Gunakan RPC 'upsert_setting' (SECURITY DEFINER, bypass RLS).
+   Kalau RPC belum dibuat, tampilkan panduan ke admin. */
+async function upsertSetting(key, value) {
+  try {
+    // Cara 1: RPC dengan SECURITY DEFINER (bypass RLS sepenuhnya)
+    const { error: rpcErr } = await sb.rpc('upsert_setting', {
+      p_key: key,
+      p_value: value
+    });
+
+    if (!rpcErr) return null; // berhasil
+
+    // Kalau RPC belum ada (error 404/PGRST202), coba cara 2
+    if (rpcErr.code === 'PGRST202' || rpcErr.message?.includes('Could not find')) {
+      return await _upsertSettingDirect(key, value);
+    }
+
+    return rpcErr;
+  } catch (e) {
+    return e;
+  }
+}
+
+/* Cara 2: direct REST dengan Bearer token (butuh RLS policy di Supabase) */
+async function _upsertSettingDirect(key, value) {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return new Error('Tidak ada sesi login.');
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/settings?on_conflict=key`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON,
+        'Authorization': `Bearer ${token}`,
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({ key, value })
+    });
+
+    if (res.ok) return null;
+
+    // Jika 403 RLS, tampilkan panduan setup
+    if (res.status === 403) {
+      _showRLSGuide();
+      return new Error('RLS memblokir akses. Lihat panduan di bawah.');
+    }
+
+    const msg = await res.text().catch(() => res.statusText);
+    return new Error(`HTTP ${res.status}: ${msg}`);
+  } catch (e) {
+    return e;
+  }
+}
+
+/* Tampilkan panduan sekali saja */
+let _rlsGuideShown = false;
+function _showRLSGuide() {
+  if (_rlsGuideShown) return;
+  _rlsGuideShown = true;
+
+  const existing = document.getElementById('rlsGuideBox');
+  if (existing) return;
+
+  const box = document.createElement('div');
+  box.id = 'rlsGuideBox';
+  box.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;background:#0f0f0f;border:1px solid rgba(204,0,0,.4);border-radius:8px;padding:20px 24px;max-width:520px;width:calc(100% - 32px);box-shadow:0 20px 60px rgba(0,0,0,.8)';
+  box.innerHTML = `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:#ff6666;letter-spacing:.06em">⚠️ Perlu Setup Supabase (1 menit)</div>
+      <button onclick="document.getElementById('rlsGuideBox').remove()" style="background:none;border:none;color:rgba(255,255,255,.3);font-size:18px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">×</button>
+    </div>
+    <p style="font-size:10px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:14px">
+      Tabel <code style="background:rgba(255,255,255,.07);padding:1px 6px;border-radius:3px">settings</code> belum punya RLS policy untuk write. Jalankan SQL berikut di <strong style="color:#f0ebe3">Supabase Dashboard → SQL Editor</strong>:
+    </p>
+    <div style="position:relative">
+      <pre id="rlsSql" style="background:#141414;border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:12px 14px;font-size:10px;color:#a8d8a8;overflow-x:auto;margin:0;line-height:1.7">-- Buat function SECURITY DEFINER (bypass RLS)
+CREATE OR REPLACE FUNCTION upsert_setting(p_key TEXT, p_value JSONB)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  INSERT INTO settings (key, value)
+  VALUES (p_key, p_value)
+  ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+END;
+$$;
+
+-- ATAU: tambah RLS policy untuk user authenticated
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "allow_authenticated_all" ON settings
+  FOR ALL TO authenticated
+  USING (true) WITH CHECK (true);</pre>
+      <button onclick="navigator.clipboard.writeText(document.getElementById('rlsSql').textContent).then(()=>this.textContent='✓ Disalin!').catch(()=>{})" style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:4px;color:rgba(255,255,255,.5);font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;cursor:pointer;font-family:inherit">Salin SQL</button>
+    </div>
+    <p style="font-size:9px;color:rgba(255,255,255,.25);margin-top:10px;line-height:1.6">Setelah menjalankan SQL, simpan ulang. Panduan ini tidak akan muncul lagi.</p>
+  `;
+  document.body.appendChild(box);
+}
+
 async function saveBeranda() {
-  const { error } = await sb.from('settings')
-    .upsert({ key: 'beranda', value: beranda }, { onConflict: 'key' });
+  const error = await upsertSetting('beranda', beranda);
   if (error) { toast('Gagal simpan: ' + error.message, 'err'); return; }
   toast('Pengaturan beranda disimpan! 🏠', 'ok');
 }
@@ -895,7 +997,16 @@ let konten = {
   s2_sub: 'Brand fashion lokal Indonesia.\nDibangun dari identitas, semangat, dan keberanian.',
   s3_tag: 'From East to Peace',
   s3_title: 'Brand Lokal\nPenuh Jiwa.',
-  s3_desc: 'Garisrey lahir dari semangat anak muda Indonesia Timur yang ingin berbicara lewat fashion. Setiap jahitan adalah ekspresi, setiap detail adalah cerita. Kami percaya pakaian bukan sekadar kain — ia adalah identitas.'
+  s3_desc: 'Garisrey lahir dari semangat anak muda Indonesia Timur yang ingin berbicara lewat fashion. Setiap jahitan adalah ekspresi, setiap detail adalah cerita. Kami percaya pakaian bukan sekadar kain — ia adalah identitas.',
+  s3_stat1_num: '',
+  s3_stat1_lbl: 'Produk Aktif',
+  s3_stat2_num: '100%',
+  s3_stat2_lbl: 'Made in ID',
+  s3_stat3_num: 'SS25',
+  s3_stat3_lbl: 'Koleksi Kini',
+  wa_pesan_umum: 'Halo Garisrey! 👋 Saya ingin bertanya tentang produk kalian.',
+  wa_pesan_order: 'Halo Garisrey! 👋 Saya ingin order. Boleh info produk yang tersedia?',
+  marquee_items: 'Garisrey · From East to Peace · Made in Indonesia · Baggy Build · Local Pride · Denim Culture · SS 2025 · #GarisreyID'
 };
 
 async function loadKonten() {
@@ -911,32 +1022,47 @@ async function saveKontenSection(section) {
     konten.s2_eyebrow = document.getElementById('k_s2_eyebrow')?.value ?? konten.s2_eyebrow;
     konten.s2_sub     = document.getElementById('k_s2_sub')?.value     ?? konten.s2_sub;
   } else if (section === 3) {
-    konten.s3_tag   = document.getElementById('k_s3_tag')?.value   ?? konten.s3_tag;
-    konten.s3_title = document.getElementById('k_s3_title')?.value ?? konten.s3_title;
-    konten.s3_desc  = document.getElementById('k_s3_desc')?.value  ?? konten.s3_desc;
+    konten.s3_tag        = document.getElementById('k_s3_tag')?.value        ?? konten.s3_tag;
+    konten.s3_title      = document.getElementById('k_s3_title')?.value      ?? konten.s3_title;
+    konten.s3_desc       = document.getElementById('k_s3_desc')?.value       ?? konten.s3_desc;
+    konten.s3_stat1_num  = document.getElementById('k_s3_stat1_num')?.value  ?? konten.s3_stat1_num;
+    konten.s3_stat1_lbl  = document.getElementById('k_s3_stat1_lbl')?.value  ?? konten.s3_stat1_lbl;
+    konten.s3_stat2_num  = document.getElementById('k_s3_stat2_num')?.value  ?? konten.s3_stat2_num;
+    konten.s3_stat2_lbl  = document.getElementById('k_s3_stat2_lbl')?.value  ?? konten.s3_stat2_lbl;
+    konten.s3_stat3_num  = document.getElementById('k_s3_stat3_num')?.value  ?? konten.s3_stat3_num;
+    konten.s3_stat3_lbl  = document.getElementById('k_s3_stat3_lbl')?.value  ?? konten.s3_stat3_lbl;
+  } else if (section === 4) {
+    konten.wa_pesan_umum  = document.getElementById('k_wa_pesan_umum')?.value  ?? konten.wa_pesan_umum;
+    konten.wa_pesan_order = document.getElementById('k_wa_pesan_order')?.value ?? konten.wa_pesan_order;
+    konten.marquee_items  = document.getElementById('k_marquee_items')?.value  ?? konten.marquee_items;
   }
 
-  const { error } = await sb.from('settings')
-    .upsert({ key: 'konten_beranda', value: konten }, { onConflict: 'key' });
-
+  const error = await upsertSetting('konten_beranda', konten);
   if (btn) { btn.disabled = false; btn.textContent = '💾 Simpan'; }
   if (error) { toast('Gagal simpan: ' + error.message, 'err'); return; }
-  toast('Section ' + section + ' disimpan! ✏️', 'ok');
+  toast('Berhasil disimpan! ✏️', 'ok');
 }
 
 async function saveKonten() {
   const btn = document.getElementById('saveKontenBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
 
-  konten.s2_eyebrow = document.getElementById('k_s2_eyebrow')?.value || konten.s2_eyebrow;
-  konten.s2_sub     = document.getElementById('k_s2_sub')?.value     || konten.s2_sub;
-  konten.s3_tag     = document.getElementById('k_s3_tag')?.value     || konten.s3_tag;
-  konten.s3_title   = document.getElementById('k_s3_title')?.value   || konten.s3_title;
-  konten.s3_desc    = document.getElementById('k_s3_desc')?.value    || konten.s3_desc;
+  konten.s2_eyebrow     = document.getElementById('k_s2_eyebrow')?.value     || konten.s2_eyebrow;
+  konten.s2_sub         = document.getElementById('k_s2_sub')?.value         || konten.s2_sub;
+  konten.s3_tag         = document.getElementById('k_s3_tag')?.value         || konten.s3_tag;
+  konten.s3_title       = document.getElementById('k_s3_title')?.value       || konten.s3_title;
+  konten.s3_desc        = document.getElementById('k_s3_desc')?.value        || konten.s3_desc;
+  konten.s3_stat1_num   = document.getElementById('k_s3_stat1_num')?.value   ?? konten.s3_stat1_num;
+  konten.s3_stat1_lbl   = document.getElementById('k_s3_stat1_lbl')?.value   || konten.s3_stat1_lbl;
+  konten.s3_stat2_num   = document.getElementById('k_s3_stat2_num')?.value   || konten.s3_stat2_num;
+  konten.s3_stat2_lbl   = document.getElementById('k_s3_stat2_lbl')?.value   || konten.s3_stat2_lbl;
+  konten.s3_stat3_num   = document.getElementById('k_s3_stat3_num')?.value   || konten.s3_stat3_num;
+  konten.s3_stat3_lbl   = document.getElementById('k_s3_stat3_lbl')?.value   || konten.s3_stat3_lbl;
+  konten.wa_pesan_umum  = document.getElementById('k_wa_pesan_umum')?.value  || konten.wa_pesan_umum;
+  konten.wa_pesan_order = document.getElementById('k_wa_pesan_order')?.value || konten.wa_pesan_order;
+  konten.marquee_items  = document.getElementById('k_marquee_items')?.value  || konten.marquee_items;
 
-  const { error } = await sb.from('settings')
-    .upsert({ key: 'konten_beranda', value: konten }, { onConflict: 'key' });
-
+  const error = await upsertSetting('konten_beranda', konten);
   if (btn) { btn.disabled = false; btn.textContent = '💾 Simpan Teks'; }
   if (error) { toast('Gagal simpan: ' + error.message, 'err'); return; }
   toast('Teks beranda disimpan! ✏️', 'ok');
@@ -966,9 +1092,7 @@ async function saveSosial() {
   sosial.tiktok = document.getElementById('k_tiktok')?.value || sosial.tiktok;
   sosial.shopee = document.getElementById('k_shopee')?.value || sosial.shopee;
 
-  const { error } = await sb.from('settings')
-    .upsert({ key: 'sosial', value: sosial }, { onConflict: 'key' });
-
+  const error = await upsertSetting('sosial', sosial);
   if (btn) { btn.disabled = false; btn.textContent = '💾 Simpan Link'; }
   if (error) { toast('Gagal simpan: ' + error.message, 'err'); return; }
   toast('Link sosial disimpan! 🔗', 'ok');
@@ -1058,6 +1182,80 @@ async function renderBeranda() {
             style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);color:#f0ebe3;padding:10px 13px;font-size:12px;border-radius:4px;outline:none;font-family:inherit;resize:vertical;line-height:1.7;transition:border-color .2s"
             onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">${esc(konten.s3_desc)}</textarea>
           <div style="font-size:9px;color:rgba(255,255,255,.25);margin-top:4px">Paragraf deskripsi brand di section about</div>
+        </div>
+
+        <!-- ── STATS ── -->
+        <div style="margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06)">
+          <div style="font-size:7px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:var(--gray);margin-bottom:12px">Statistik (3 Kotak Angka)</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+            ${[1,2,3].map(i => `
+            <div style="background:#141414;border:1px solid rgba(255,255,255,.07);border-radius:5px;padding:12px">
+              <div style="font-size:7px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:8px">Stat ${i}</div>
+              <input id="k_s3_stat${i}_num" type="text" placeholder="Angka / Nilai"
+                value="${esc(konten['s3_stat'+i+'_num'] || '')}"
+                style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);color:#f0ebe3;padding:8px 10px;font-size:14px;font-weight:700;border-radius:3px;outline:none;font-family:inherit;margin-bottom:6px;transition:border-color .2s"
+                onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'"/>
+              <input id="k_s3_stat${i}_lbl" type="text" placeholder="Label"
+                value="${esc(konten['s3_stat'+i+'_lbl'] || '')}"
+                style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.5);padding:7px 10px;font-size:10px;border-radius:3px;outline:none;font-family:inherit;transition:border-color .2s"
+                onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'"/>
+              ${i === 1 ? '<div style="font-size:8px;color:rgba(255,255,255,.2);margin-top:5px">Kosongkan angka = otomatis pakai jumlah produk aktif</div>' : ''}
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION 4: PESAN WA & MARQUEE ── -->
+    <div class="form-card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--red);margin-bottom:4px">💬 Pesan WhatsApp & Marquee</div>
+          <div style="font-size:11px;color:var(--gray)">Atur pesan otomatis WA dan teks berjalan di bagian atas halaman</div>
+        </div>
+        <button class="btn btn-red btn-sm" id="saveS4Btn" onclick="saveKontenSection(4)">💾 Simpan</button>
+      </div>
+
+      <!-- PESAN WA -->
+      <div style="margin-bottom:20px;padding:18px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:6px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+          <span style="font-size:16px">📱</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.5)">Pesan WhatsApp Otomatis</span>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:7px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:var(--gray);margin-bottom:6px">
+            Pesan Umum <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:9px;color:rgba(255,255,255,.25)">(footer, icon sosial)</span>
+          </label>
+          <textarea id="k_wa_pesan_umum" rows="2"
+            style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);color:#f0ebe3;padding:10px 13px;font-size:12px;border-radius:4px;outline:none;font-family:inherit;resize:vertical;line-height:1.7;transition:border-color .2s"
+            onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">${esc(konten.wa_pesan_umum)}</textarea>
+          <div style="font-size:9px;color:rgba(255,255,255,.25);margin-top:4px">Muncul saat user klik icon WA di footer / sosial media</div>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:7px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:var(--gray);margin-bottom:6px">
+            Pesan Order <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:9px;color:rgba(255,255,255,.25)">(popup order, tombol WhatsApp)</span>
+          </label>
+          <textarea id="k_wa_pesan_order" rows="2"
+            style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);color:#f0ebe3;padding:10px 13px;font-size:12px;border-radius:4px;outline:none;font-family:inherit;resize:vertical;line-height:1.7;transition:border-color .2s"
+            onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">${esc(konten.wa_pesan_order)}</textarea>
+          <div style="font-size:9px;color:rgba(255,255,255,.25);margin-top:4px">Muncul saat user klik tombol "Order via WhatsApp" atau "Chat langsung"</div>
+        </div>
+      </div>
+
+      <!-- MARQUEE -->
+      <div style="padding:18px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:6px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:16px">📢</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.5)">Teks Berjalan (Marquee)</span>
+        </div>
+        <textarea id="k_marquee_items" rows="3"
+          style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);color:#f0ebe3;padding:10px 13px;font-size:12px;border-radius:4px;outline:none;font-family:inherit;resize:vertical;line-height:1.7;transition:border-color .2s"
+          onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">${esc(konten.marquee_items)}</textarea>
+        <div style="font-size:9px;color:rgba(255,255,255,.25);margin-top:6px;line-height:1.7">
+          Pisahkan setiap kata/frasa dengan <strong style="color:rgba(255,255,255,.4)"> · </strong> (spasi titik spasi)<br>
+          Contoh: <span style="color:rgba(255,255,255,.35)">Garisrey · From East to Peace · SS 2025 · #GarisreyID</span>
         </div>
       </div>
     </div>
@@ -1262,8 +1460,7 @@ function toggleFeatured(id) {
 }
 
 async function saveFeatured() {
-  const { error } = await sb.from('settings')
-    .upsert({ key: 'featured_products', value: { ids: _featuredIds } }, { onConflict: 'key' });
+  const error = await upsertSetting('featured_products', { ids: _featuredIds });
   if (error) { toast('Gagal simpan: ' + error.message, 'err'); return; }
   toast('4 Produk utama berhasil disimpan! ✅', 'ok');
 }

@@ -304,49 +304,7 @@
   filter: brightness(1.05) drop-shadow(0 4px 32px rgba(204,0,0,.18));
 }
 
-.hero-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: .35em;
-  text-transform: uppercase;
-  color: var(--red);
-  margin-bottom: 10px;
-}
-
 .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
-
-/* About text - link estetis gantikan tombol */
-.about-cta-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .25em;
-  text-transform: uppercase;
-  color: var(--white);
-  text-decoration: none;
-  padding-bottom: 4px;
-  border-bottom: 1px solid rgba(255,255,255,.25);
-  transition: all .25s;
-  position: relative;
-}
-
-.about-cta-link::before {
-  content: '';
-  position: absolute;
-  bottom: -1px; left: 0;
-  width: 0;
-  height: 1px;
-  background: var(--red);
-  transition: width .35s cubic-bezier(.4,0,.2,1);
-}
-
-.about-cta-link:hover { color: var(--red); border-color: transparent; }
-.about-cta-link:hover::before { width: 100%; }
 
 .about-text { padding-bottom: 20px; }
 
@@ -583,9 +541,43 @@
 @media (max-width: 768px) {
   .hero-side-text { display: none; }
   .latest-hero { padding: 48px var(--px) 60px; }
+  .cta-band { padding: 56px var(--px); }
+  .about-sec { padding: 64px var(--px); }
 }
 
 @media (max-width: 480px) {
-  .prods-grid { grid-template-columns: repeat(2, 1fr); }
+  /* Grid produk */
+  .prods-grid { grid-template-columns: repeat(2, 1fr); gap: 1px; }
+
+  /* Sticker */
   .sticker-img-wrap { width: clamp(120px, 55vw, 200px); }
+  .sticker-sec { padding: 48px var(--px); }
+
+  /* Hero */
+  .hero { min-height: 520px; }
+  .hero-content { padding: 0 var(--px) 72px; }
+  .hero-logo-img { height: clamp(60px, 18vw, 110px); }
+  .hero-sub { font-size: 10px; margin-bottom: 28px; }
+  .hero-btns { flex-direction: column; gap: 10px; }
+  .hero-btns .btn { width: 100%; justify-content: center; }
+  .hero-scroll { display: none; }
+
+  /* Latest hero */
+  .latest-hero { padding: 32px var(--px) 40px; }
+  .latest-hero-title-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+
+  /* About */
+  .about-sec { padding: 48px var(--px); }
+  .about-stats { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .stat-num { font-size: 28px; }
+  .about-desc { font-size: 12px; }
+
+  /* CTA Band */
+  .cta-band { padding: 40px var(--px); }
+  .cta-band-inner { flex-direction: column; gap: 20px; }
+  .cta-band-title { font-size: clamp(22px, 6vw, 32px); }
+  .cta-band-inner .btn { width: 100%; justify-content: center; }
+
+  /* Loading screen */
+  .pl-corner { display: none; }
 }

@@ -64,7 +64,7 @@ body.login-page {
 }
 
 .panel-brand { display: flex; align-items: center; gap: 12px; }
-.panel-logo { height: 56px; width: auto; object-fit: contain; }
+.panel-logo { height: 36px; }
 .panel-wordmark { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 18px; }
 .panel-wordmark span { color: var(--red); }
 
@@ -331,13 +331,42 @@ body.login-page {
 @media (max-width: 768px) {
   body.login-page {
     grid-template-columns: 1fr;
-    grid-template-rows: 180px 1fr;
+    grid-template-rows: 160px 1fr;
     overflow: auto;
   }
 
-  .panel-left { min-height: 180px; }
-  .panel-content { padding: 18px 22px; }
-  .panel-quote { font-size: 22px; }
+  .panel-left { min-height: 160px; }
+  .panel-content { padding: 16px 20px; }
+  .panel-quote { font-size: 20px; }
+  .panel-tags { display: none; }
   .panel-right { padding: 24px 18px; overflow-y: auto; }
   .panel-right::before { display: none; }
+}
+
+@media (max-width: 480px) {
+  body.login-page {
+    grid-template-rows: 140px 1fr;
+  }
+
+  .panel-left { min-height: 140px; }
+  .panel-logo { height: 44px; }
+  .panel-quote { font-size: 18px; }
+  .panel-sub { display: none; }
+
+  .panel-right { padding: 20px 16px; }
+  .form-wrap { max-width: 100%; }
+  .form-title { font-size: 28px; }
+  .form-desc { font-size: 9px; margin-bottom: 20px; }
+
+  /* Tabs */
+  .tab { font-size: 7.5px; padding: 9px; }
+
+  /* Fields */
+  .field input { font-size: 14px; padding: 13px 42px 13px 13px; }
+  .field label { font-size: 6.5px; }
+
+  /* Buttons */
+  .btn-submit { font-size: 8.5px; padding: 14px; }
+  .btn-ghost-full { font-size: 8px; padding: 12px; }
+  .back-link { font-size: 7.5px; margin-top: 14px; }
 }

@@ -68,11 +68,25 @@ async function init() {
   // Load hero background non-blocking
   loadHero();
 
-  // Realtime subscription
+  // Realtime: produk
   sb.channel('products-live')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, async () => {
       await loadProducts();
       renderGrid();
+    })
+    .subscribe();
+
+  // Realtime: settings (beranda, konten, sosial) — auto-update tanpa refresh
+  sb.channel('settings-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, async (payload) => {
+      const key = payload.new?.key || payload.old?.key;
+      if (key === 'konten_beranda') {
+        loadKontenBeranda();
+      } else if (key === 'beranda') {
+        loadHero();
+      } else if (key === 'sosial') {
+        loadSosialLinks();
+      }
     })
     .subscribe();
 }
@@ -208,7 +222,15 @@ async function loadSosialLinks() {
     const s = data.value;
 
     // Update semua link WA, IG, TikTok, Shopee di halaman
-    document.querySelectorAll('a[href*="wa.me"]').forEach(el => { if (s.wa) el.href = s.wa; });
+    // WA: ganti base URL tapi pertahankan ?text= yang sudah ada
+    if (s.wa) {
+      const waBase = s.wa.split('?')[0]; // ambil hanya base URL nomor WA
+      document.querySelectorAll('a[href*="wa.me"]').forEach(el => {
+        const existing = el.href;
+        const textParam = existing.includes('?text=') ? existing.substring(existing.indexOf('?')) : '';
+        el.href = waBase + textParam;
+      });
+    }
     document.querySelectorAll('a[href*="instagram.com"]').forEach(el => { if (s.ig) el.href = s.ig; });
     document.querySelectorAll('a[href*="tiktok.com"]').forEach(el => { if (s.tiktok) el.href = s.tiktok; });
     document.querySelectorAll('a[href*="shopee.co.id"]').forEach(el => { if (s.shopee) el.href = s.shopee; });
@@ -246,6 +268,49 @@ async function loadKontenBeranda() {
 
     const aboutDesc = document.querySelector('.about-desc');
     if (aboutDesc && k.s3_desc) aboutDesc.textContent = k.s3_desc;
+
+    // Section 3 — Stats
+    // Stat 1: kosong = otomatis pakai jumlah produk (diisi oleh animateCounter di renderGrid)
+    if (k.s3_stat1_num) {
+      const el = document.getElementById('statProds');
+      if (el) el.textContent = k.s3_stat1_num;
+    }
+    const lbl1 = document.getElementById('statProdsLbl');
+    if (lbl1 && k.s3_stat1_lbl) lbl1.textContent = k.s3_stat1_lbl;
+
+    const num2 = document.getElementById('stat2Num');
+    if (num2 && k.s3_stat2_num) num2.textContent = k.s3_stat2_num;
+    const lbl2 = document.getElementById('stat2Lbl');
+    if (lbl2 && k.s3_stat2_lbl) lbl2.textContent = k.s3_stat2_lbl;
+
+    const num3 = document.getElementById('stat3Num');
+    if (num3 && k.s3_stat3_num) num3.textContent = k.s3_stat3_num;
+    const lbl3 = document.getElementById('stat3Lbl');
+    if (lbl3 && k.s3_stat3_lbl) lbl3.textContent = k.s3_stat3_lbl;
+
+    // Section 4 — Pesan WA
+    if (k.wa_pesan_umum) {
+      WA_PESAN_UMUM = k.wa_pesan_umum;
+      // Update link WA umum (footer, sosial) — skip tombol order
+      document.querySelectorAll('a[href*="wa.me"]:not([data-wa-order])').forEach(el => {
+        const base = el.href.split('?')[0];
+        el.href = base + '?text=' + encodeURIComponent(k.wa_pesan_umum);
+      });
+    }
+    if (k.wa_pesan_order) {
+      WA_PESAN_ORDER = k.wa_pesan_order;
+      // Update tombol order popup WA saja
+      document.querySelectorAll('a[data-wa-order]').forEach(el => {
+        const base = el.href.split('?')[0];
+        el.href = base + '?text=' + encodeURIComponent(k.wa_pesan_order);
+      });
+    }
+
+    // Section 4 — Marquee
+    if (k.marquee_items) {
+      const items = k.marquee_items.split('·').map(s => s.trim()).filter(Boolean);
+      if (items.length) buildMarquee('mqTrack', items);
+    }
 
   } catch (_) {}
 }
@@ -308,8 +373,6 @@ function renderGrid() {
     var firstImg = imgs[0] || '';
     var isWished = wishlist.includes(p.id);
     var pid = p.id;
-
-    var dots = ''; // dots sekarang di dalam prod-card-quick (centered)
 
     var priceHtml = '<div class="prod-card-price"><span class="price-main"><sup style="font-size:.55em;vertical-align:super">Rp</sup>' + fmt(p.price) + '</span>';
     if (p.price_ori > p.price) {

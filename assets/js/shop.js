@@ -226,23 +226,10 @@ window.modalToggleWish  = modalToggleWish;
 async function init() {
   initNavScroll('navbar');
   initAccDropdownClose();
-  buildMarquee('mqTrack');
   initAuth();
 
-  // Load link sosial dari Supabase
-  try {
-    const { data } = await Promise.race([
-      sb.from('settings').select('value').eq('key','sosial').single(),
-      new Promise(r => setTimeout(() => r({ data: null }), 3000))
-    ]);
-    if (data?.value) {
-      const s = data.value;
-      document.querySelectorAll('a[href*="wa.me"]').forEach(el => { if (s.wa) el.href = s.wa; });
-      document.querySelectorAll('a[href*="instagram.com"]').forEach(el => { if (s.ig) el.href = s.ig; });
-      document.querySelectorAll('a[href*="tiktok.com"]').forEach(el => { if (s.tiktok) el.href = s.tiktok; });
-      document.querySelectorAll('a[href*="shopee.co.id"]').forEach(el => { if (s.shopee) el.href = s.shopee; });
-    }
-  } catch (_) {}
+  await loadSosialShop();
+  await loadKontenShop();
 
   try {
     await loadProducts();
@@ -252,13 +239,14 @@ async function init() {
 
   buildChips();
   applyFilter();
+  renderFooterProducts(allProducts);
 
   const loadingEl = document.getElementById('loadingEl');
   const prodsCont = document.getElementById('prodsCont');
   if (loadingEl) loadingEl.style.display = 'none';
   if (prodsCont) prodsCont.style.display = 'block';
 
-  // Realtime update
+  // Realtime: produk
   sb.channel('products-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, async () => {
       await loadProducts();
@@ -266,6 +254,74 @@ async function init() {
       applyFilter();
     })
     .subscribe();
+
+  // Realtime: settings sosial — auto-update tanpa refresh
+  sb.channel('settings-shop')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, async (payload) => {
+      const key = payload.new?.key || payload.old?.key;
+      if (key === 'sosial') loadSosialShop();
+      if (key === 'konten_beranda') loadKontenShop();
+    })
+    .subscribe();
+}
+
+async function loadSosialShop() {
+  try {
+    const { data } = await Promise.race([
+      sb.from('settings').select('value').eq('key', 'sosial').maybeSingle(),
+      new Promise(r => setTimeout(() => r({ data: null }), 3000))
+    ]);
+    if (data?.value) {
+      const s = data.value;
+      // WA: ganti base URL tapi pertahankan ?text= yang sudah ada
+      if (s.wa) {
+        const waBase = s.wa.split('?')[0];
+        document.querySelectorAll('a[href*="wa.me"]').forEach(el => {
+          const existing = el.href;
+          const textParam = existing.includes('?text=') ? existing.substring(existing.indexOf('?')) : '';
+          el.href = waBase + textParam;
+        });
+      }
+      document.querySelectorAll('a[href*="instagram.com"]').forEach(el => { if (s.ig) el.href = s.ig; });
+      document.querySelectorAll('a[href*="tiktok.com"]').forEach(el => { if (s.tiktok) el.href = s.tiktok; });
+      document.querySelectorAll('a[href*="shopee.co.id"]').forEach(el => { if (s.shopee) el.href = s.shopee; });
+    }
+  } catch (_) {}
+}
+
+async function loadKontenShop() {
+  try {
+    const { data } = await Promise.race([
+      sb.from('settings').select('value').eq('key', 'konten_beranda').maybeSingle(),
+      new Promise(r => setTimeout(() => r({ data: null }), 3000))
+    ]);
+    if (!data?.value) { buildMarquee('mqTrack'); return; }
+    const k = data.value;
+
+    // Pesan WA
+    if (k.wa_pesan_umum) {
+      WA_PESAN_UMUM = k.wa_pesan_umum;
+      document.querySelectorAll('a[href*="wa.me"]:not([data-wa-order])').forEach(el => {
+        const base = el.href.split('?')[0];
+        el.href = base + '?text=' + encodeURIComponent(k.wa_pesan_umum);
+      });
+    }
+    if (k.wa_pesan_order) {
+      WA_PESAN_ORDER = k.wa_pesan_order;
+      document.querySelectorAll('a[data-wa-order]').forEach(el => {
+        const base = el.href.split('?')[0];
+        el.href = base + '?text=' + encodeURIComponent(k.wa_pesan_order);
+      });
+    }
+
+    // Marquee
+    const items = k.marquee_items
+      ? k.marquee_items.split('·').map(s => s.trim()).filter(Boolean)
+      : null;
+    buildMarquee('mqTrack', items);
+  } catch (_) {
+    buildMarquee('mqTrack');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
