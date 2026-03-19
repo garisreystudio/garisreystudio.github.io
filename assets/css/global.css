@@ -589,53 +589,26 @@ nav.always-solid {
 footer {
   background: var(--black2);
   border-top: 1px solid rgba(255,255,255,.04);
-  padding: 64px var(--px) 32px;
+  padding: 48px var(--px) 40px;
 }
 
 .foot-inner { max-width: 1200px; margin: 0 auto; }
 
 .foot-grid {
   display: grid;
-  grid-template-columns: 2.2fr 1fr 1fr 1fr;
-  gap: 48px;
-  margin-bottom: 48px;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 40px;
+  align-items: start;
 }
 
-.foot-brand-logo { height: 64px; width: auto; object-fit: contain; margin-bottom: 16px; opacity: .95; }
-.foot-brand-tagline { font-family: 'DM Serif Display', serif; font-size: 13px; font-style: italic; color: rgba(255,255,255,.4); margin-bottom: 10px; }
-.foot-brand-desc { font-size: 10px; color: rgba(255,255,255,.25); line-height: 1.8; max-width: 260px; }
+.foot-brand-logo { height: 64px; width: auto; object-fit: contain; margin-bottom: 4px; margin-top: -14px; opacity: .95; }
+.foot-brand-tagline { font-family: 'DM Serif Display', serif; font-size: 15px; font-style: italic; color: rgba(255,255,255,.4); margin-bottom: 10px; }
+.foot-brand-desc { font-size: 12px; color: rgba(255,255,255,.3); line-height: 1.9; max-width: 280px; }
 
-.foot-col h4 { font-size: 7px; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; color: var(--gray2); margin-bottom: 16px; }
-.foot-col a, .foot-col span { display: block; font-size: 10px; color: rgba(255,255,255,.3); margin-bottom: 10px; transition: color .2s; cursor: pointer; }
+.foot-col { padding-top: 2px; }
+.foot-col h4 { font-size: 8px; font-weight: 700; letter-spacing: .28em; text-transform: uppercase; color: var(--gray2); margin-bottom: 18px; }
+.foot-col a, .foot-col span { display: block; font-size: 12px; color: rgba(255,255,255,.35); margin-bottom: 12px; transition: color .2s; cursor: pointer; }
 .foot-col a:hover, .foot-col span:hover { color: var(--white); }
-
-.foot-bot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(255,255,255,.04);
-}
-
-.foot-copy { font-size: 9px; color: rgba(255,255,255,.2); letter-spacing: .08em; }
-.foot-soc { display: flex; gap: 6px; }
-
-.soc-btn {
-  width: 32px; height: 32px;
-  border: 1px solid rgba(255,255,255,.06);
-  border-radius: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 9px;
-  font-weight: 700;
-  color: rgba(255,255,255,.3);
-  transition: all .2s;
-}
-
-.soc-btn:hover { border-color: var(--red); color: var(--red); }
 
 /* shared spin keyframe (used by login.css spin-sm, admin.css spinner) */
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -643,6 +616,10 @@ footer {
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
   :root { --px: 28px; }
+  .foot-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 32px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -650,21 +627,36 @@ footer {
   .nav-links, .nav-cta { display: none; }
   .ham { display: flex; }
   .modal-box { grid-template-columns: 1fr; }
-  .foot-grid { grid-template-columns: 1fr 1fr; }
+  .foot-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 28px;
+  }
+  /* Brand kolom span full width di atas */
+  .foot-grid > div:first-child {
+    grid-column: 1 / -1;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    margin-bottom: 4px;
+  }
 }
 
 @media (max-width: 480px) {
   :root { --px: 16px; --nav-h: 60px; }
-  .foot-grid { grid-template-columns: 1fr; }
+  .foot-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .foot-grid > div:first-child {
+    grid-column: 1 / -1;
+  }
+  .foot-brand-logo { height: 48px; }
   .nav-logo { height: 40px; }
   .btn { padding: 12px 20px; font-size: 8px; }
   .btn-sm { padding: 8px 12px; font-size: 7.5px; }
   .section-title { font-size: clamp(26px, 8vw, 40px); }
   .section-tag { font-size: 7px; letter-spacing: .25em; }
   .mq-item { font-size: 8px; padding: 0 16px; }
-  footer { padding: 48px var(--px) 24px; }
-  .foot-bot { flex-direction: column; align-items: flex-start; gap: 16px; }
-  .foot-brand-logo { height: 48px; }
+  footer { padding: 40px var(--px) 32px; }
   .dr-lnk { font-size: 11px; padding: 14px 32px; }
 
   /* Modal — slide up from bottom on mobile */
