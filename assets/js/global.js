@@ -228,6 +228,9 @@ function _applySlide(i, restart) {
     d.style.background = idx === i ? '#fff' : 'rgba(255,255,255,.3)';
     d.style.width      = idx === i ? '20px' : '6px';
   });
+  /* Counter */
+  var ctr = document.getElementById('mSlideCounter');
+  if (ctr && _slideImgs.length > 1) ctr.textContent = (i + 1) + ' / ' + _slideImgs.length;
   /* Restart timer dari awal saat manual */
   if (restart) { _clearSlide(); _startSlide(); }
 }
@@ -352,13 +355,7 @@ function renderProductModal(wishlistArr) {
       '</div>' +
     '</div>';
 
-  /* Update counter saat slide */
-  var origApply = _applySlide;
-  _applySlide = function(i, restart) {
-    origApply(i, restart);
-    var ctr = document.getElementById('mSlideCounter');
-    if (ctr) ctr.textContent = (i+1) + ' / ' + imgs.length;
-  };
+  /* Counter update: handled inside _applySlide base via mSlideCounter element check */
 }
 
 /* ORDER NOW dari popup produk */
@@ -620,3 +617,6 @@ window.openOrderPopupProduct = openOrderPopupProduct;
 window.mSlidePrev            = mSlidePrev;
 window.mSlideNext            = mSlideNext;
 window.mSlideTo              = mSlideTo;
+/* WA message globals — writable so index.js/shop.js can update from Supabase */
+Object.defineProperty(window, 'WA_PESAN_UMUM',  { get: () => WA_PESAN_UMUM,  set: v => { WA_PESAN_UMUM  = v; }, configurable: true });
+Object.defineProperty(window, 'WA_PESAN_ORDER', { get: () => WA_PESAN_ORDER, set: v => { WA_PESAN_ORDER = v; }, configurable: true });

@@ -44,7 +44,7 @@ function runLoadingScreen() {
 async function init() {
   runLoadingScreen();
 
-  buildMarquee('mqTrack');
+  buildMarquee('mqTrack'); // show default items immediately; rebuilt by loadKontenBeranda if custom items exist
   initNavScroll('navbar');
   initAccDropdownClose();
   loadLogoAssets();
@@ -246,7 +246,7 @@ async function loadKontenBeranda() {
       sb.from('settings').select('value').eq('key','konten_beranda').maybeSingle(),
       new Promise(r => setTimeout(() => r({ data: null }), 3000))
     ]);
-    if (!data?.value) return;
+    if (!data?.value) return; // marquee already built with defaults in init()
     const k = data.value;
 
     // Section 2 — Hero
@@ -312,7 +312,11 @@ async function loadKontenBeranda() {
       if (items.length) buildMarquee('mqTrack', items);
     }
 
-  } catch (_) {}
+  } catch (_) {
+    // ensure marquee has content if init default somehow missed
+    const track = document.getElementById('mqTrack');
+    if (track && !track.children.length) buildMarquee('mqTrack');
+  }
 }
 
 
@@ -411,7 +415,11 @@ function renderGrid() {
   });
 
   renderFooterProducts(products);
-  animateCounter('statProds', products.length);
+  // Only animate counter if admin hasn't set a custom stat1 value
+  const statEl = document.getElementById('statProds');
+  if (statEl && (statEl.textContent === '0' || statEl.textContent === '')) {
+    animateCounter('statProds', products.length);
+  }
 }
 
 

@@ -270,6 +270,7 @@ nav.always-solid {
   background: linear-gradient(to top, rgba(8,8,8,.9) 0%, transparent 50%);
   opacity: 0;
   transition: opacity .4s;
+  pointer-events: none;
 }
 
 .prod-card:hover .prod-card-overlay { opacity: 1; }
@@ -386,7 +387,7 @@ nav.always-solid {
 
 .modal-close:hover { background: var(--red); color: #fff; }
 .modal-gal { background: var(--black3); display: flex; flex-direction: column; }
-.modal-main { flex: 1; overflow: hidden; min-height: 300px; }
+.modal-main { flex: 1; overflow: hidden; min-height: 200px; }
 .modal-main img { width: 100%; height: 100%; object-fit: cover; }
 
 .modal-thumbs {
@@ -674,6 +675,8 @@ footer {
     max-height: 96vh;
     overflow-y: auto;
   }
+  .modal-gal { max-height: 52vw; min-height: unset; }
+  .modal-main { min-height: unset; max-height: 52vw; }
   .modal-info { padding: 20px 16px; max-height: none; }
   .m-name { font-size: clamp(20px, 5vw, 28px); }
   .m-price { font-size: 28px; }

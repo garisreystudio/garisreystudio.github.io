@@ -181,6 +181,7 @@
   background: linear-gradient(to top, rgba(8,8,8,.9) 0%, transparent 50%);
   opacity: 0;
   transition: opacity .4s;
+  pointer-events: none;
 }
 
 .card:hover .card-overlay { opacity: 1; }
