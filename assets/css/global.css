@@ -691,25 +691,22 @@ footer {
 
 /* ── TOUCH DEVICES: reveal card interactions without hover ── */
 @media (hover: none) {
-  /* Wishlist heart always visible */
+  /* Wishlist heart selalu visible di HP */
   .prod-card-wish { opacity: 1; }
+  .card-wish      { opacity: 1; }
 
-  /* Subtle gradient always visible */
+  /* Gradient bawah tetap tampil agar harga terbaca */
   .prod-card-overlay {
     opacity: 1;
-    background: linear-gradient(to top, rgba(8,8,8,.75) 0%, transparent 45%);
+    background: linear-gradient(to top, rgba(8,8,8,.6) 0%, transparent 40%);
   }
-
-  /* Quick button always shown */
-  .prod-card-quick { transform: none; opacity: 1; }
-  .prod-card-quick.centered { transform: translateY(-50%); }
-
-  /* Shop card equivalents */
-  .card-wish { opacity: 1; }
   .card-overlay {
     opacity: 1;
-    background: linear-gradient(to top, rgba(8,8,8,.75) 0%, transparent 45%);
+    background: linear-gradient(to top, rgba(8,8,8,.6) 0%, transparent 40%);
   }
-  .card-quick { transform: none; opacity: 1; }
-  .card-quick.centered { transform: translateY(-50%); }
+
+  /* Tombol "Lihat Detail" DISEMBUNYIKAN di HP —
+     seluruh card sudah bisa ditap langsung untuk buka modal */
+  .prod-card-quick { opacity: 0 !important; pointer-events: none; }
+  .card-quick      { opacity: 0 !important; pointer-events: none; }
 }

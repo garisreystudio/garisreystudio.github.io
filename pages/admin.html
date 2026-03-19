@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Space+Mono:wght@400;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../assets/css/admin.css"/>
+    <link rel="stylesheet" href="../assets/css/admin.css" />
   </head>
   <body>
     <!-- AUTH GATE -->
@@ -41,11 +41,34 @@
       <aside class="sidebar" id="sidebar">
         <div class="sb-head">
           <div class="sb-logo">
-            <img id="sbLogoImg" src="../assets/logo/logotransparan.png" alt="Garisrey"
-              style="height:60px;width:auto;object-fit:contain"
-              onerror="this.onerror=null;this.src='../assets/logo/logo.png';this.onerror=function(){this.style.display='none';document.getElementById('sbWordmark').style.display='block';}"/>
-            <div id="sbWordmark" style="display:none;font-family:'DM Serif Display',serif;font-style:italic;font-size:22px;color:#f0ebe3;letter-spacing:-.01em">Garis<em style="color:var(--red)">rey.</em></div>
-            <div class="sb-role" style="margin-top:0">Admin Panel</div>
+            <img
+              id="sbLogoImg"
+              src="../assets/logo/logo.png"
+              alt="Garisrey"
+              style="height: 60px; width: auto; object-fit: contain"
+              onerror="
+                this.onerror = null;
+                this.src = '../assets/logo/logo.png';
+                this.onerror = function () {
+                  this.style.display = 'none';
+                  document.getElementById('sbWordmark').style.display = 'block';
+                };
+              "
+            />
+            <div
+              id="sbWordmark"
+              style="
+                display: none;
+                font-family: &quot;DM Serif Display&quot;, serif;
+                font-style: italic;
+                font-size: 22px;
+                color: #f0ebe3;
+                letter-spacing: -0.01em;
+              "
+            >
+              Garis<em style="color: var(--red)">rey.</em>
+            </div>
+            <div class="sb-role" style="margin-top: 0">Admin Panel</div>
           </div>
         </div>
 
@@ -149,10 +172,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script>
       /* ── GLOBAL UTILITIES (inline) ── */
-      var SUPABASE_URL  = "https://lpkbbrjyscwmdowxexbx.supabase.co";
+      var SUPABASE_URL = "https://lpkbbrjyscwmdowxexbx.supabase.co";
       var SUPABASE_ANON = "sb_publishable_7Pl3BeLfdECmKoyi1bqMtA_SA1CoCsv";
-      var ADMIN_EMAIL   = "garisrey8@gmail.com";
-      var WA_NUMBER     = "628131003247";
+      var ADMIN_EMAIL = "garisrey8@gmail.com";
+      var WA_NUMBER = "628131003247";
       let sb;
       function initSupabase() {
         if (typeof supabase !== "undefined" && supabase.createClient) {
