@@ -228,7 +228,7 @@ async function init() {
   initAccDropdownClose();
   initAuth();
 
-  await loadSosialShop();
+  await loadSosialData();
   await loadKontenShop();
 
   try {
@@ -259,34 +259,10 @@ async function init() {
   sb.channel('settings-shop')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, async (payload) => {
       const key = payload.new?.key || payload.old?.key;
-      if (key === 'sosial') loadSosialShop();
+      if (key === 'sosial' || key === 'sosial_v2') loadSosialData();
       if (key === 'konten_beranda') loadKontenShop();
     })
     .subscribe();
-}
-
-async function loadSosialShop() {
-  try {
-    const { data } = await Promise.race([
-      sb.from('settings').select('value').eq('key', 'sosial').maybeSingle(),
-      new Promise(r => setTimeout(() => r({ data: null }), 3000))
-    ]);
-    if (data?.value) {
-      const s = data.value;
-      // WA: ganti base URL tapi pertahankan ?text= yang sudah ada
-      if (s.wa) {
-        const waBase = s.wa.split('?')[0];
-        document.querySelectorAll('a[href*="wa.me"]').forEach(el => {
-          const existing = el.href;
-          const textParam = existing.includes('?text=') ? existing.substring(existing.indexOf('?')) : '';
-          el.href = waBase + textParam;
-        });
-      }
-      document.querySelectorAll('a[href*="instagram.com"]').forEach(el => { if (s.ig) el.href = s.ig; });
-      document.querySelectorAll('a[href*="tiktok.com"]').forEach(el => { if (s.tiktok) el.href = s.tiktok; });
-      document.querySelectorAll('a[href*="shopee.co.id"]').forEach(el => { if (s.shopee) el.href = s.shopee; });
-    }
-  } catch (_) {}
 }
 
 async function loadKontenShop() {

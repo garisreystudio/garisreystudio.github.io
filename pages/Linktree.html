@@ -371,101 +371,9 @@
     </div>
 
     <!-- ── LINKS ── -->
-    <div class="links">
-
-      <!-- Shopee -->
-      <a
-        href="https://shopee.co.id/garisrey"
-        target="_blank"
-        rel="noopener"
-        class="link-item lnk-shopee"
-      >
-        <div class="link-icon">
-          <img src="../assets/logo/shopee.png" alt="Shopee"
-            onerror="this.replaceWith(Object.assign(document.createElementNS('http://www.w3.org/2000/svg','svg'),{innerHTML:'<circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;10&quot; stroke=&quot;#ff5f00&quot; stroke-width=&quot;1.5&quot; fill=&quot;none&quot;/><text x=&quot;12&quot; y=&quot;16&quot; text-anchor=&quot;middle&quot; fill=&quot;#ff5f00&quot; font-size=&quot;9&quot;>SP</text>',viewBox:'0 0 24 24'}))"/>
-        </div>
-        <div class="link-text">
-          <div class="link-label">Shopee</div>
-          <div class="link-sub">shopee.co.id/garisrey</div>
-        </div>
-        <span class="link-arrow">→</span>
-      </a>
-
-      <!-- WhatsApp -->
-      <a
-        href="https://wa.me/628131003247?text=Halo+Garisrey!+%F0%9F%91%8B+Saya+ingin+bertanya+tentang+produk+kalian."
-        target="_blank"
-        rel="noopener"
-        class="link-item lnk-wa"
-      >
-        <div class="link-icon">
-          <img src="../assets/logo/wa.png" alt="WhatsApp"
-            onerror="this.style.display='none';this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#25d366&quot; stroke-width=&quot;1.5&quot;><path d=&quot;M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z&quot;/></svg>'"/>
-        </div>
-        <div class="link-text">
-          <div class="link-label">WhatsApp</div>
-          <div class="link-sub">Chat langsung dengan kami</div>
-        </div>
-        <span class="link-arrow">→</span>
-      </a>
-
-      <!-- Instagram -->
-      <a
-        href="https://instagram.com/garisrey.studio"
-        target="_blank"
-        rel="noopener"
-        class="link-item lnk-ig"
-      >
-        <div class="link-icon">
-          <img src="../assets/logo/ig.png" alt="Instagram"
-            onerror="this.style.display='none';this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#e1306c&quot; stroke-width=&quot;1.5&quot;><rect x=&quot;2&quot; y=&quot;2&quot; width=&quot;20&quot; height=&quot;20&quot; rx=&quot;5&quot;/><circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;4&quot;/><circle cx=&quot;17.5&quot; cy=&quot;6.5&quot; r=&quot;.5&quot; fill=&quot;#e1306c&quot;/></svg>'"/>
-        </div>
-        <div class="link-text">
-          <div class="link-label">Instagram</div>
-          <div class="link-sub">@garisrey.studio</div>
-        </div>
-        <span class="link-arrow">→</span>
-      </a>
-
-      <!-- TikTok -->
-      <a
-        href="https://tiktok.com/@garisrey"
-        target="_blank"
-        rel="noopener"
-        class="link-item lnk-tiktok"
-      >
-        <div class="link-icon">
-          <img src="../assets/logo/tiktok.png" alt="TikTok"
-            onerror="this.style.display='none';this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#fff&quot; stroke-width=&quot;1.5&quot;><path d=&quot;M9 12a4 4 0 104 4V4a5 5 0 005 5&quot;/></svg>'"/>
-        </div>
-        <div class="link-text">
-          <div class="link-label">TikTok</div>
-          <div class="link-sub">@garisrey</div>
-        </div>
-        <span class="link-arrow">→</span>
-      </a>
-
-      <!-- Website -->
-      <a
-        href="https://garisreystudio.github.io/"
-        target="_blank"
-        rel="noopener"
-        class="link-item lnk-web"
-      >
-        <div class="link-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="2" y1="12" x2="22" y2="12"/>
-            <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-          </svg>
-        </div>
-        <div class="link-text">
-          <div class="link-label">Website</div>
-          <div class="link-sub">garisreystudio.github.io</div>
-        </div>
-        <span class="link-arrow">→</span>
-      </a>
-
+    <div class="links" id="linktreeLinks">
+      <!-- Links loaded dynamically from Supabase -->
+      <div style="text-align:center;padding:32px;color:rgba(255,255,255,.3);font-size:10px;letter-spacing:.1em">Memuat...</div>
     </div>
 
     <!-- ── FOOTER ── -->
@@ -477,5 +385,106 @@
 
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    /* Init Supabase + load social data using same pattern as global.js */
+    var SUPABASE_URL  = 'https://lpkbbrjyscwmdowxexbx.supabase.co';
+    var SUPABASE_ANON = 'sb_publishable_7Pl3BeLfdECmKoyi1bqMtA_SA1CoCsv';
+    var WA_PESAN_UMUM = 'Halo Garisrey! \uD83D\uDC4B Saya ingin bertanya tentang produk kalian.';
+
+    var DEFAULT_ITEMS = [
+      { id:'shopee', label:'Shopee',    url:'https://shopee.co.id/garisrey',        icon:'\uD83D\uDED8', iconType:'emoji' },
+      { id:'wa',     label:'WhatsApp',  url:'https://wa.me/628131003247',            icon:'\uD83D\uDCF1', iconType:'emoji', isWa:true },
+      { id:'ig',     label:'Instagram', url:'https://instagram.com/garisrey.studio', icon:'\uD83D\uDCF8', iconType:'emoji' },
+      { id:'tiktok', label:'TikTok',    url:'https://tiktok.com/@garisrey',          icon:'\uD83C\uDFB5', iconType:'emoji' },
+      { id:'web',    label:'Website',   url:'https://garisreystudio.github.io/',     icon:'\uD83C\uDF10', iconType:'emoji' },
+    ];
+
+    function isWaItem(item) {
+      return item.isWa || (item.url && item.url.indexOf('wa.me') !== -1);
+    }
+
+    function makeWaUrl(url) {
+      return url.split('?')[0] + '?text=' + encodeURIComponent(WA_PESAN_UMUM);
+    }
+
+    function iconHtml(item) {
+      if (item.iconType === 'image' && item.iconImg) {
+        return '<img src="'+item.iconImg+'" style="width:22px;height:22px;object-fit:cover;border-radius:3px;display:block" onerror="this.style.display=\'none\'">';
+      }
+      return '<span style="font-size:22px;line-height:1">'+(item.icon || '🔗')+'</span>';
+    }
+
+    function buildLinks(items) {
+      var container = document.getElementById('linktreeLinks');
+      if (!container) return;
+      /* Filter out inactive items */
+      var active = items.filter(function(i){ return i.active !== false; });
+      if (!active.length) {
+        container.innerHTML = '<div style="text-align:center;padding:32px;color:rgba(255,255,255,.3);font-size:10px">Belum ada link aktif.</div>';
+        return;
+      }
+      var idx2 = 0;
+      container.innerHTML = active.map(function(item) {
+        var href  = isWaItem(item) ? makeWaUrl(item.url) : item.url;
+        var delay = (0.15 + idx2 * 0.07).toFixed(2);
+        var sub   = href.replace(/^https?:\/\//, '').replace(/\?.*/, '').replace(/\/$/, '');
+        idx2++;
+        return '<a href="'+href+'" target="_blank" rel="noopener" class="link-item" style="animation-delay:'+delay+'s">' +
+          '<div class="link-icon">'+iconHtml(item)+'</div>' +
+          '<div class="link-text"><div class="link-label">'+item.label+'</div><div class="link-sub">'+sub+'</div></div>' +
+          '<span class="link-arrow">→</span>' +
+        '</a>';
+      }).join('');
+    }
+
+    /* Show defaults immediately, then override with Supabase data */
+    buildLinks(DEFAULT_ITEMS);
+
+    (async function() {
+      try {
+        if (typeof supabase === 'undefined') return;
+        var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+        /* Try new format first */
+        var r1 = await Promise.race([
+          sb.from('settings').select('value').eq('key','sosial_v2').maybeSingle(),
+          new Promise(function(r){ setTimeout(function(){ r({data:null}); }, 3000); })
+        ]);
+
+        /* Also load WA message */
+        var rk = await Promise.race([
+          sb.from('settings').select('value').eq('key','konten_beranda').maybeSingle(),
+          new Promise(function(r){ setTimeout(function(){ r({data:null}); }, 2000); })
+        ]);
+        if (rk && rk.data && rk.data.value && rk.data.value.wa_pesan_umum) {
+          WA_PESAN_UMUM = rk.data.value.wa_pesan_umum;
+        }
+
+        if (r1 && r1.data && Array.isArray(r1.data.value) && r1.data.value.length) {
+          buildLinks(r1.data.value);
+          return;
+        }
+
+        /* Fallback to old format */
+        var r2 = await Promise.race([
+          sb.from('settings').select('value').eq('key','sosial').maybeSingle(),
+          new Promise(function(r){ setTimeout(function(){ r({data:null}); }, 2000); })
+        ]);
+        if (r2 && r2.data && r2.data.value) {
+          var s = r2.data.value;
+          var arr = [];
+          if (s.shopee) arr.push({ id:'shopee', label:'Shopee',    url:s.shopee, icon:'\uD83D\uDED8', iconType:'emoji' });
+          if (s.wa)     arr.push({ id:'wa',     label:'WhatsApp',  url:s.wa,     icon:'\uD83D\uDCF1', iconType:'emoji', isWa:true });
+          if (s.ig)     arr.push({ id:'ig',     label:'Instagram', url:s.ig,     icon:'\uD83D\uDCF8', iconType:'emoji' });
+          if (s.tiktok) arr.push({ id:'tiktok', label:'TikTok',    url:s.tiktok, icon:'\uD83C\uDFB5', iconType:'emoji' });
+          if (arr.length) buildLinks(arr);
+        }
+      } catch(e) {
+        console.warn('[Linktree] Supabase error:', e);
+        /* Already showing defaults — no action needed */
+      }
+    })();
+  </script>
 </body>
 </html>

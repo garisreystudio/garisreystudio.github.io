@@ -67,6 +67,137 @@ function showToast(msg, type = 'info') {
 let WA_PESAN_UMUM  = 'Halo Garisrey! 👋 Saya ingin bertanya tentang produk kalian.';
 let WA_PESAN_ORDER = 'Halo Garisrey! 👋 Saya ingin order. Boleh info produk yang tersedia?';
 
+/* Global social media items cache — loaded from Supabase sosial_v2 */
+let _sosialData = null;
+
+async function loadSosialData() {
+  if (!sb) return;
+  try {
+    var result = await Promise.race([
+      sb.from('settings').select('value').eq('key','sosial_v2').maybeSingle(),
+      new Promise(function(r){ setTimeout(function(){ r({data:null}); }, 3000); })
+    ]);
+    if (result && result.data && Array.isArray(result.data.value)) {
+      _sosialData = result.data.value;
+    } else {
+      /* Fallback to legacy key */
+      var r2 = await Promise.race([
+        sb.from('settings').select('value').eq('key','sosial').maybeSingle(),
+        new Promise(function(r){ setTimeout(function(){ r({data:null}); }, 2000); })
+      ]);
+      if (r2 && r2.data && r2.data.value) {
+        var s = r2.data.value;
+        var arr = [];
+        if (s.shopee) arr.push({ id:'shopee', label:'Shopee',    url:s.shopee, icon:'🛍', color:'#ff5f00' });
+        if (s.wa)     arr.push({ id:'wa',     label:'WhatsApp',  url:s.wa,     icon:'📱', color:'#25d366', isWa:true });
+        if (s.ig)     arr.push({ id:'ig',     label:'Instagram', url:s.ig,     icon:'📸', color:'#e1306c' });
+        if (s.tiktok) arr.push({ id:'tiktok', label:'TikTok',    url:s.tiktok, icon:'🎵', color:'#ffffff' });
+        if (arr.length) _sosialData = arr;
+      }
+    }
+  } catch(e) { /* keep defaults */ }
+  /* Apply to all surfaces */
+  _applyAllSosial();
+}
+
+function _getSosialData() {
+  var items = _sosialData || [
+    { id:'shopee', label:'Shopee',    url:'https://shopee.co.id/garisrey',        icon:'🛍', iconType:'emoji' },
+    { id:'wa',     label:'WhatsApp',  url:'https://wa.me/628131003247',            icon:'📱', iconType:'emoji', isWa:true },
+    { id:'ig',     label:'Instagram', url:'https://instagram.com/garisrey.studio', icon:'📸', iconType:'emoji' },
+    { id:'tiktok', label:'TikTok',    url:'https://tiktok.com/@garisrey',          icon:'🎵', iconType:'emoji' },
+  ];
+  /* Only return active items (active: false = hidden) */
+  return items.filter(function(i) { return i.active !== false; });
+}
+
+function _isWaItem(item) {
+  return item.isWa || (item.url && item.url.includes('wa.me'));
+}
+function _makeWaUrl(item) {
+  if (!_isWaItem(item)) return item.url;
+  var base = item.url.split('?')[0];
+  return base + '?text=' + encodeURIComponent(WA_PESAN_UMUM);
+}
+function _makeWaOrderUrl(item) {
+  if (!_isWaItem(item)) return item.url;
+  var base = item.url.split('?')[0];
+  return base + '?text=' + encodeURIComponent(WA_PESAN_ORDER);
+}
+
+function _applyAllSosial() {
+  _buildOrderPopups();
+  _buildFooterLinks();
+}
+
+/* ── Helper: render icon element (emoji or image) ── */
+function _iconHtml(item, size) {
+  size = size || 22;
+  if (item.iconType === 'image' && item.iconImg) {
+    return '<img src="'+item.iconImg+'" style="width:'+size+'px;height:'+size+'px;object-fit:cover;border-radius:3px;display:block;flex-shrink:0" onerror="this.style.display=\'none\'">';
+  }
+  /* Use line-height:1 + exact font-size so emoji takes predictable space */
+  return '<span style="font-size:'+size+'px;line-height:1;display:block;text-align:center;width:'+size+'px;flex-shrink:0">'+(item.icon || '🔗')+'</span>';
+}
+
+/* ── Rebuild all .order-popup-links containers ── */
+function _buildOrderPopups() {
+  var items = _getSosialData();
+  document.querySelectorAll('.order-popup-links').forEach(function(container) {
+    container.innerHTML = items.map(function(item) {
+      var href = item.isWa ? _makeWaOrderUrl(item) : item.url;
+      return '<a href="'+href+'" target="_blank" ' +
+        'style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(255,255,255,.04);' +
+        'border:1px solid rgba(255,255,255,.08);border-radius:8px;text-decoration:none;transition:background .18s" ' +
+        'onmouseover="this.style.background=\'rgba(255,255,255,.08)\'" onmouseout="this.style.background=\'rgba(255,255,255,.04)\'">' +
+        '<div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_iconHtml(item, 24)+'</div>' +
+        '<div style="text-align:left">' +
+          '<div style="font-size:11px;font-weight:700;color:#f0ebe3">'+item.label+'</div>' +
+          '<div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:2px">'+(item.isWa ? 'Chat langsung dengan kami' : 'Order via '+item.label)+'</div>' +
+        '</div>' +
+        '<span style="margin-left:auto;color:rgba(255,255,255,.25)">→</span>' +
+      '</a>';
+    }).join('');
+  });
+}
+
+/* ── Rebuild footer contact links ── */
+function _buildFooterLinks() {
+  var items = _getSosialData();
+  document.querySelectorAll('.footer-sosial-links').forEach(function(container) {
+    container.innerHTML = items.map(function(item) {
+      var href = item.isWa ? _makeWaUrl(item) : item.url;
+      return '<a href="'+href+'" target="_blank" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12px;color:rgba(255,255,255,.35);transition:color .2s;text-decoration:none" onmouseover="this.style.color=\'#fafafa\'" onmouseout="this.style.color=\'rgba(255,255,255,.35)\'">' +
+        '<span style="width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1">'+_iconHtml(item, 14)+'</span>' +
+        '<span>'+item.label+'</span>' +
+      '</a>';
+    }).join('');
+  });
+}
+
+/* ── Build Linktree list ── */
+function buildLinktreeLinks(containerId) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  var items = _getSosialData();
+  container.innerHTML = items.map(function(item, idx) {
+    var href  = item.isWa ? _makeWaUrl(item) : item.url;
+    var col   = item.color || '#ffffff';
+    var delay = (0.15 + idx * 0.07).toFixed(2);
+    var sub   = href.replace(/^https?:\/\//, '').replace(/\?.*/, '').replace(/\/$/, '');
+    return '<a href="'+href+'" target="_blank" rel="noopener" class="link-item" style="--link-accent:'+col+';animation-delay:'+delay+'s">' +
+      '<div class="link-icon">'+_iconHtml(item, 22)+'</div>' +
+      '<div class="link-text">' +
+        '<div class="link-label">'+item.label+'</div>' +
+        '<div class="link-sub">'+sub+'</div>' +
+      '</div>' +
+      '<span class="link-arrow">→</span>' +
+    '</a>';
+  }).join('');
+}
+window.buildLinktreeLinks = buildLinktreeLinks;
+window.loadSosialData     = loadSosialData;
+
 function buildMarquee(containerId, customItems) {
   containerId = containerId || 'mqTrack';
   var defaultItems = ['Garisrey', 'From East to Peace', 'Made in Indonesia', 'Baggy Build', 'Local Pride', 'Denim Culture', 'SS 2025', '#GarisreyID'];

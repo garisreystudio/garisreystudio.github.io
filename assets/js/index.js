@@ -62,7 +62,7 @@ async function init() {
 
   // Load konten teks beranda dari Supabase
   loadKontenBeranda();
-  loadSosialLinks();
+  loadSosialData();
 
   // Load produk dengan timeout 5 detik
   try {
@@ -98,10 +98,10 @@ async function init() {
         const key = payload.new?.key || payload.old?.key;
         if (key === "konten_beranda") {
           loadKontenBeranda();
-        } else if (key === "beranda") {
+        } else if (key === 'beranda') {
           loadHero();
-        } else if (key === "sosial") {
-          loadSosialLinks();
+        } else if (key === 'sosial' || key === 'sosial_v2') {
+          loadSosialData();
         }
       },
     )
@@ -253,42 +253,6 @@ function tryLoadImg(imgs, container, imgIdx) {
   el.onload = () => container.appendChild(el);
   el.onerror = () => tryLoadImg(imgs, container, imgIdx + 1);
   el.src = imgs[imgIdx];
-}
-
-/* ══════════════════════════════════════
-   LOAD & APPLY SOSIAL LINKS
-══════════════════════════════════════ */
-async function loadSosialLinks() {
-  try {
-    const { data } = await Promise.race([
-      sb.from("settings").select("value").eq("key", "sosial").maybeSingle(),
-      new Promise((r) => setTimeout(() => r({ data: null }), 3000)),
-    ]);
-    if (!data?.value) return;
-    const s = data.value;
-
-    // Update semua link WA, IG, TikTok, Shopee di halaman
-    // WA: ganti base URL tapi pertahankan ?text= yang sudah ada
-    if (s.wa) {
-      const waBase = s.wa.split("?")[0]; // ambil hanya base URL nomor WA
-      document.querySelectorAll('a[href*="wa.me"]').forEach((el) => {
-        const existing = el.href;
-        const textParam = existing.includes("?text=")
-          ? existing.substring(existing.indexOf("?"))
-          : "";
-        el.href = waBase + textParam;
-      });
-    }
-    document.querySelectorAll('a[href*="instagram.com"]').forEach((el) => {
-      if (s.ig) el.href = s.ig;
-    });
-    document.querySelectorAll('a[href*="tiktok.com"]').forEach((el) => {
-      if (s.tiktok) el.href = s.tiktok;
-    });
-    document.querySelectorAll('a[href*="shopee.co.id"]').forEach((el) => {
-      if (s.shopee) el.href = s.shopee;
-    });
-  } catch (_) {}
 }
 
 /* ══════════════════════════════════════

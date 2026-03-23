@@ -1328,53 +1328,250 @@ async function saveKonten() {
 }
 
 /* ══════════════════════════════════════
-   LINK SOSIAL
+   LINK SOSIAL — Full Dynamic System
+   Data: array of {id, label, url, icon, iconType, iconImg, color, isWa}
+   iconType: 'emoji' | 'image'
+   iconImg:  Supabase public URL (when iconType === 'image')
+   Stored in Supabase settings key 'sosial_v2'
 ══════════════════════════════════════ */
-let sosial = {
-  wa: "https://wa.me/628131003247",
-  ig: "https://instagram.com/garisrey.studio",
-  tiktok: "https://tiktok.com/@garisrey",
-  shopee: "https://shopee.co.id/garisrey",
-};
+
+let sosialItems = [
+  { id: 'wa',     label: 'WhatsApp',  url: 'https://wa.me/628131003247',            icon: '📱', iconType: 'emoji', color: '#25d366', isWa: true },
+  { id: 'shopee', label: 'Shopee',    url: 'https://shopee.co.id/garisrey',         icon: '🛍', iconType: 'emoji', color: '#ff5f00' },
+  { id: 'ig',     label: 'Instagram', url: 'https://instagram.com/garisrey.studio', icon: '📸', iconType: 'emoji', color: '#e1306c' },
+  { id: 'tiktok', label: 'TikTok',    url: 'https://tiktok.com/@garisrey',          icon: '🎵', iconType: 'emoji', color: '#ffffff' },
+];
+
+let sosial = {}; /* Legacy compat */
+
+function _uid() { return Math.random().toString(36).slice(2, 9); }
 
 async function loadSosial() {
   const { data } = await (async () => {
-    try {
-      return await sb
-        .from("settings")
-        .select("value")
-        .eq("key", "sosial")
-        .maybeSingle();
-    } catch (_) {
-      return { data: null };
-    }
+    try { return await sb.from('settings').select('value').eq('key', 'sosial_v2').maybeSingle(); }
+    catch (_) { return { data: null }; }
   })();
-  if (data?.value) sosial = { ...sosial, ...data.value };
+  if (data?.value && Array.isArray(data.value)) {
+    sosialItems = data.value;
+  } else {
+    /* Fallback: convert old sosial key */
+    const { data: old } = await (async () => {
+      try { return await sb.from('settings').select('value').eq('key', 'sosial').maybeSingle(); }
+      catch (_) { return { data: null }; }
+    })();
+    if (old?.value) {
+      sosial = old.value;
+      const map = [
+        { key: 'wa',     label: 'WhatsApp',  icon: '📱', color: '#25d366', isWa: true },
+        { key: 'ig',     label: 'Instagram', icon: '📸', color: '#e1306c' },
+        { key: 'tiktok', label: 'TikTok',    icon: '🎵', color: '#ffffff' },
+        { key: 'shopee', label: 'Shopee',    icon: '🛍', color: '#ff5f00' },
+      ];
+      const converted = map.filter(m => sosial[m.key]).map(m => ({
+        id: m.key, label: m.label, url: sosial[m.key],
+        icon: m.icon, iconType: 'emoji', color: m.color, isWa: m.isWa || false,
+      }));
+      if (converted.length) sosialItems = converted;
+    }
+  }
 }
 
 async function saveSosial() {
-  const btn = document.getElementById("saveSosialBtn");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Menyimpan...";
-  }
+  const btn = document.getElementById('saveSosialBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
 
-  sosial.wa = document.getElementById("k_wa")?.value || sosial.wa;
-  sosial.ig = document.getElementById("k_ig")?.value || sosial.ig;
-  sosial.tiktok = document.getElementById("k_tiktok")?.value || sosial.tiktok;
-  sosial.shopee = document.getElementById("k_shopee")?.value || sosial.shopee;
+  sosialItems = sosialItems.map(function (item) {
+    const urlEl   = document.getElementById('surl_' + item.id);
+    const labelEl = document.getElementById('slbl_' + item.id);
+    const iconEl  = document.getElementById('sico_' + item.id);
+    return Object.assign({}, item, {
+      url:   urlEl   ? urlEl.value.trim()   : item.url,
+      label: labelEl ? labelEl.value.trim() : item.label,
+      icon:  (item.iconType === 'emoji' && iconEl) ? iconEl.value : item.icon,
+    });
+  }).filter(function (item) { return item.url && item.label; });
 
-  const error = await upsertSetting("sosial", sosial);
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = "💾 Simpan Link";
-  }
+  const error = await upsertSetting('sosial_v2', sosialItems);
+  if (btn) { btn.disabled = false; btn.textContent = '💾 Simpan Link'; }
+  if (error) { toast('Gagal simpan: ' + error.message, 'err'); return; }
+  toast('Link sosial disimpan! 🔗', 'ok');
+}
+
+function addSosialItem() {
+  sosialItems.push({ id: _uid(), label: '', url: '', icon: '🔗', iconType: 'emoji', color: '#cccccc', isWa: false });
+  renderSosialList();
+  /* Focus label input of new item */
+  const last = sosialItems[sosialItems.length - 1];
+  setTimeout(function () {
+    const el = document.getElementById('slbl_' + last.id);
+    if (el) el.focus();
+  }, 50);
+}
+
+function removeSosialItem(id) {
+  sosialItems = sosialItems.filter(function (s) { return s.id !== id; });
+  renderSosialList();
+}
+
+/* Called when user picks a file for the icon */
+async function uploadSosialIcon(id, file) {
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { toast('File harus berupa gambar.', 'err'); return; }
+  if (file.size > 2 * 1024 * 1024) { toast('Ukuran maks 2MB.', 'err'); return; }
+
+  const btn = document.getElementById('sico_upload_btn_' + id);
+  if (btn) { btn.disabled = true; btn.textContent = '⬆...'; }
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const path = 'sosial/' + Date.now() + '_' + safeName;
+  const { error } = await sb.storage.from('assets').upload(path, file, { upsert: true, contentType: file.type });
+
   if (error) {
-    toast("Gagal simpan: " + error.message, "err");
+    toast('Gagal upload: ' + error.message, 'err');
+    if (btn) { btn.disabled = false; btn.textContent = '📁 Upload Gambar'; }
     return;
   }
-  toast("Link sosial disimpan! 🔗", "ok");
+
+  const { data: pub } = sb.storage.from('assets').getPublicUrl(path);
+  const item = sosialItems.find(function (s) { return s.id === id; });
+  if (item) {
+    item.icon     = pub.publicUrl;
+    item.iconType = 'image';
+    item.iconImg  = pub.publicUrl;
+  }
+  toast('Ikon diupload! ✅', 'ok');
+  renderSosialList(); /* Re-render to show image preview */
 }
+
+/* Switch between emoji and image mode */
+function switchSosialIconMode(id, mode) {
+  const item = sosialItems.find(function (s) { return s.id === id; });
+  if (!item) return;
+  /* Flush current emoji value before switching */
+  if (mode === 'image' && item.iconType === 'emoji') {
+    const iconEl = document.getElementById('sico_' + id);
+    if (iconEl) item.icon = iconEl.value;
+  }
+  item.iconType = mode;
+  if (mode === 'emoji' && item.iconImg) {
+    item.icon = '🔗'; /* Reset to emoji placeholder */
+  }
+  renderSosialList();
+}
+
+function renderSosialList() {
+  const container = document.getElementById('sosialList');
+  if (!container) return;
+
+  if (!sosialItems.length) {
+    container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--gray);font-size:11px">Belum ada platform. Klik &quot;+ Tambah Platform&quot;.</div>';
+    return;
+  }
+
+  container.innerHTML = sosialItems.map(function (item) {
+    const isImg    = item.iconType === 'image';
+    const isActive = item.active !== false;
+
+    const iconPreview = isImg && item.iconImg
+      ? '<img src="' + item.iconImg + '" style="width:100%;height:100%;object-fit:cover;border-radius:4px;display:block"/>'
+      : '<span style="font-size:22px;line-height:1">' + esc(item.icon || '\U0001F517') + '</span>';
+
+    const emojiInput = !isImg
+      ? '<input id="sico_' + item.id + '" type="text" value="' + esc(item.icon || '') + '" maxlength="4" placeholder="\U0001F517" ' +
+          'style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);color:#f0ebe3;' +
+          'padding:8px 10px;font-size:20px;text-align:center;border-radius:4px;outline:none;font-family:inherit;' +
+          'transition:border-color .18s" onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.08)\'"/>'
+      : '';
+
+    const imgUpload = isImg
+      ? '<div style="position:relative">' +
+          '<input type="file" id="sico_file_' + item.id + '" accept="image/*" ' +
+            'style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:2" ' +
+            'onchange="uploadSosialIcon(\'' + item.id + '\',this.files[0])">' +
+          '<button id="sico_upload_btn_' + item.id + '" type="button" ' +
+            'style="width:100%;padding:8px 6px;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);' +
+            'color:rgba(255,255,255,.4);font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;' +
+            'border-radius:4px;font-family:inherit;pointer-events:none">' +
+            (item.iconImg ? '\u2713 Ganti Gambar' : '\U0001F4C1 Upload Gambar') +
+          '</button>' +
+        '</div>'
+      : '';
+
+    return (
+      '<div style="background:#141414;border:1px solid ' + (isActive ? 'rgba(255,255,255,.07)' : 'rgba(255,255,255,.03)') + ';' +
+        'border-radius:6px;padding:14px;margin-bottom:10px;opacity:' + (isActive ? '1' : '0.45') + '">' +
+
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">' +
+          '<div style="width:42px;height:42px;border-radius:5px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);' +
+            'display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">' +
+            iconPreview +
+          '</div>' +
+          '<input id="slbl_' + item.id + '" type="text" value="' + esc(item.label) + '" placeholder="Nama platform (cth: WhatsApp)" ' +
+            'style="flex:1;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);color:#f0ebe3;padding:9px 12px;' +
+            'font-size:12px;font-weight:700;border-radius:4px;outline:none;font-family:inherit;transition:border-color .18s" ' +
+            'onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.08)\'"/>' +
+          '<button onclick="removeSosialItem(\'' + item.id + '\')" title="Hapus platform" ' +
+            'style="width:36px;height:36px;border-radius:4px;border:1px solid rgba(204,0,0,.2);background:rgba(204,0,0,.06);' +
+            'color:rgba(204,0,0,.6);font-size:16px;cursor:pointer;flex-shrink:0;transition:all .18s" ' +
+            'onmouseover="this.style.background=\'rgba(204,0,0,.18)\';this.style.color=\'#ff4444\'" ' +
+            'onmouseout="this.style.background=\'rgba(204,0,0,.06)\';this.style.color=\'rgba(204,0,0,.6)\'">&#x2715;</button>' +
+        '</div>' +
+
+        '<div style="margin-bottom:12px">' +
+          '<label style="display:block;font-size:7px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gray);margin-bottom:5px">URL / Link</label>' +
+          '<input id="surl_' + item.id + '" type="url" value="' + esc(item.url) + '" placeholder="https://..." ' +
+            'style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);color:#f0ebe3;padding:9px 12px;' +
+            'font-size:11px;border-radius:4px;outline:none;font-family:inherit;transition:border-color .18s" ' +
+            'onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'rgba(255,255,255,.08)\'"/>' +
+        '</div>' +
+
+        '<div style="margin-bottom:12px">' +
+          '<label style="display:block;font-size:7px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gray);margin-bottom:6px">Ikon</label>' +
+          '<div style="display:flex;gap:4px;margin-bottom:8px">' +
+            '<button type="button" onclick="switchSosialIconMode(\'' + item.id + '\',\'emoji\')" ' +
+              'style="padding:5px 14px;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;' +
+              'border-radius:3px;cursor:pointer;font-family:inherit;transition:all .18s;border:1px solid ' +
+              (!isImg ? 'var(--red);background:rgba(204,0,0,.12);color:#ff8888' : 'rgba(255,255,255,.08);background:transparent;color:rgba(255,255,255,.3)') + '">Emoji</button>' +
+            '<button type="button" onclick="switchSosialIconMode(\'' + item.id + '\',\'image\')" ' +
+              'style="padding:5px 14px;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;' +
+              'border-radius:3px;cursor:pointer;font-family:inherit;transition:all .18s;border:1px solid ' +
+              (isImg ? 'var(--red);background:rgba(204,0,0,.12);color:#ff8888' : 'rgba(255,255,255,.08);background:transparent;color:rgba(255,255,255,.3)') + '">Gambar</button>' +
+          '</div>' +
+          emojiInput +
+          imgUpload +
+        '</div>' +
+
+        '<div style="padding-top:10px;border-top:1px solid rgba(255,255,255,.05)">' +
+          '<button type="button" onclick="toggleSosialActive(\'' + item.id + '\')" ' +
+            'style="width:100%;padding:8px 12px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;' +
+            'border-radius:4px;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;' +
+            'border:1px solid ' + (isActive ? 'rgba(34,197,94,.3);background:rgba(34,197,94,.07);color:#4ade80' : 'rgba(255,255,255,.08);background:transparent;color:rgba(255,255,255,.3)') + '">' +
+            '<span style="width:7px;height:7px;border-radius:50%;background:' + (isActive ? '#4ade80' : 'rgba(255,255,255,.2)') + ';flex-shrink:0;display:inline-block"></span>' +
+            (isActive ? 'Link Aktif \u2014 Klik untuk Matikan' : 'Link Mati \u2014 Klik untuk Aktifkan') +
+          '</button>' +
+        '</div>' +
+
+      '</div>'
+    );
+  }).join('');
+}
+
+
+function toggleSosialActive(id) {
+  const item = sosialItems.find(function (s) { return s.id === id; });
+  if (!item) return;
+  item.active = item.active === false; /* false → true, true/undefined → false */
+  renderSosialList();
+}
+
+function toggleSosialWa(id) {
+  const item = sosialItems.find(function (s) { return s.id === id; });
+  if (!item) return;
+  item.isWa = !item.isWa;
+  renderSosialList();
+}
+
+
 
 async function renderBeranda() {
   await Promise.all([loadBeranda(), loadKonten(), loadSosial()]);
@@ -1571,74 +1768,29 @@ async function renderBeranda() {
       </div>
     </div>
 
-    <!-- ── LINK SOSIAL ── -->
+    <!-- ── LINK SOSIAL DINAMIS ── -->
     <div class="form-card" style="margin-bottom:16px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px">
         <div>
-          <div style="font-size:9px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--red);margin-bottom:4px">🔗 Link Sosial & Order</div>
-          <div style="font-size:11px;color:var(--gray)">Edit link yang tampil di seluruh halaman website</div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--red);margin-bottom:4px">🔗 Link Sosial Media</div>
+          <div style="font-size:11px;color:var(--gray)">Tambah, edit, atau hapus platform — ikon bisa emoji atau upload gambar</div>
         </div>
-        <button class="btn btn-red btn-sm" id="saveSosialBtn" onclick="saveSosial()">💾 Simpan Link</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-out btn-sm" onclick="addSosialItem()">+ Tambah Platform</button>
+          <button class="btn btn-red btn-sm" id="saveSosialBtn" onclick="saveSosial()">💾 Simpan Link</button>
+        </div>
       </div>
-
-      ${(function () {
-        var fields = [
-          {
-            id: "k_wa",
-            icon: "📱",
-            label: "WhatsApp",
-            hint: "Format: https://wa.me/628xxxxxxxx",
-            val: sosial.wa,
-          },
-          {
-            id: "k_ig",
-            icon: "📸",
-            label: "Instagram",
-            hint: "Format: https://instagram.com/username",
-            val: sosial.ig,
-          },
-          {
-            id: "k_tiktok",
-            icon: "🎵",
-            label: "TikTok",
-            hint: "Format: https://tiktok.com/@username",
-            val: sosial.tiktok,
-          },
-          {
-            id: "k_shopee",
-            icon: "🛍️",
-            label: "Shopee",
-            hint: "Format: https://shopee.co.id/username",
-            val: sosial.shopee,
-          },
-        ];
-        return fields
-          .map(function (f) {
-            return (
-              '<div style="margin-bottom:14px">' +
-              '<label style="display:flex;align-items:center;gap:6px;font-size:7px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:var(--gray);margin-bottom:6px">' +
-              f.icon +
-              " " +
-              f.label +
-              "</label>" +
-              '<input id="' +
-              f.id +
-              '" type="url" value="' +
-              esc(f.val) +
-              '"' +
-              ' style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.08);color:#f0ebe3;padding:10px 13px;font-size:12px;border-radius:4px;outline:none;font-family:inherit;transition:border-color .2s"' +
-              " onfocus=\"this.style.borderColor='var(--red)'\" onblur=\"this.style.borderColor='rgba(255,255,255,.08)'\"/>" +
-              '<div style="font-size:9px;color:rgba(255,255,255,.25);margin-top:4px">' +
-              f.hint +
-              "</div>" +
-              "</div>"
-            );
-          })
-          .join("");
-      })()}
-    </div>`;
+      <div style="font-size:9px;color:rgba(255,255,255,.2);margin-bottom:14px;line-height:1.7">
+        Link ke wa.me otomatis dikenali sebagai WhatsApp dan akan memakai pesan order. Matikan link untuk menyembunyikan platform dari website tanpa menghapusnya.
+      </div>
+      <div id="sosialList"></div>
+    </div>
+  `;
 
   requestAnimationFrame(() => {
+    /* Render dynamic sosial list */
+    renderSosialList();
+
     const fi = document.getElementById("berandaFileInput");
     if (fi)
       fi.addEventListener("change", (ev) =>
@@ -1939,7 +2091,14 @@ window.toggleStatus = toggleStatus;
 window.saveBeranda = saveBeranda;
 window.saveKonten = saveKonten;
 window.saveKontenSection = saveKontenSection;
-window.saveSosial = saveSosial;
+window.saveSosial           = saveSosial;
+window.addSosialItem        = addSosialItem;
+window.removeSosialItem     = removeSosialItem;
+window.renderSosialList     = renderSosialList;
+window.toggleSosialActive   = toggleSosialActive;
+window.toggleSosialWa       = toggleSosialWa;
+window.switchSosialIconMode = switchSosialIconMode;
+window.uploadSosialIcon     = uploadSosialIcon;
 window.setBerandaTab = setBerandaTab;
 window.renderBerandaGrid = renderBerandaGrid;
 window.toggleHeroImg = toggleHeroImg;
